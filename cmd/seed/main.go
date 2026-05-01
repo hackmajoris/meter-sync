@@ -16,8 +16,9 @@ import (
 	"path/filepath"
 	"time"
 
+	_ "github.com/mutecomm/go-sqlcipher/v4" // register sqlite3 driver
+
 	"github.com/hackmajoris/counters/pkg/store"
-	_ "github.com/mutecomm/go-sqlcipher/v4"
 )
 
 func main() {
@@ -45,7 +46,7 @@ func seed(path, key string) error {
 	if err != nil {
 		return fmt.Errorf("init schema: %w", err)
 	}
-	st.Close()
+	_ = st.Close()
 
 	dsn := path
 	if key != "" {

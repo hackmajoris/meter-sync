@@ -48,7 +48,7 @@ func run(ctx context.Context, args []string, out io.Writer) error {
 	if err != nil {
 		return fmt.Errorf("opening store: %w", err)
 	}
-	defer st.Close()
+	defer st.Close() //nolint:errcheck
 
 	mux := http.NewServeMux()
 	api.Register(mux, st)
@@ -59,7 +59,7 @@ func run(ctx context.Context, args []string, out io.Writer) error {
 		return fmt.Errorf("listen: %w", err)
 	}
 	port := ln.Addr().(*net.TCPAddr).Port
-	fmt.Fprintf(out, "Server running on http://localhost:%d\n", port)
+	fmt.Fprintf(out, "Server running on http://localhost:%d\n", port) //nolint:errcheck
 
 	srv := &http.Server{Handler: mux}
 	go func() {

@@ -9,7 +9,7 @@ import (
 	"net/url"
 	"strings"
 
-	_ "github.com/mutecomm/go-sqlcipher/v4"
+	_ "github.com/mutecomm/go-sqlcipher/v4" // register sqlite3 driver with AES-256 encryption support
 )
 
 var (
@@ -568,16 +568,16 @@ func (s *Store) CounterStats(ctx context.Context, counterID string, f StatsFilte
 		args = append(args, f.EndDate)
 	}
 
-	var avg, total, max, min sql.NullFloat64
+	var avg, total, maxVal, minVal sql.NullFloat64
 	var count sql.NullInt64
-	if err := s.db.QueryRowContext(ctx, q, args...).Scan(&avg, &total, &max, &min, &count); err != nil {
+	if err := s.db.QueryRowContext(ctx, q, args...).Scan(&avg, &total, &maxVal, &minVal, &count); err != nil {
 		return Stats{}, fmt.Errorf("query stats: %w", err)
 	}
 	return Stats{
 		Avg:   avg.Float64,
 		Total: total.Float64,
-		Max:   max.Float64,
-		Min:   min.Float64,
+		Max:   maxVal.Float64,
+		Min:   minVal.Float64,
 		Count: int(count.Int64),
 	}, nil
 }
