@@ -73,7 +73,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: counters-${{ matrix.goos }}-${{ matrix.goarch }}
+          name: meter-sync-${{ matrix.goos }}-${{ matrix.goarch }}
           path: |
             electron/dist/*.dmg
             electron/dist/*.exe

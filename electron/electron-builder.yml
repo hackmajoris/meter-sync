@@ -1,5 +1,5 @@
 appId: com.hackmajoris.counters
-productName: counters
+productName: MeterSync
 directories:
   output: dist
 files:
