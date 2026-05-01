@@ -1,7 +1,7 @@
 appId: com.hackmajoris.counters
 productName: MeterSync
 directories:
-  output: dist
+  output: release
 files:
   - dist/**/*
 mac:

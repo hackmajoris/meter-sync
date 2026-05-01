@@ -3,7 +3,7 @@ package api
 import (
 	"net/http"
 
-	"github.com/hackmajoris/counters/pkg/store"
+	"github.com/hackmajoris/meter-sync/pkg/store"
 )
 
 func (h *Handler) listCounters(w http.ResponseWriter, r *http.Request) {

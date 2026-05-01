@@ -3,7 +3,7 @@ package example_test
 import (
 	"testing"
 
-	"github.com/hackmajoris/counters/pkg/example"
+	"github.com/hackmajoris/meter-sync/pkg/example"
 )
 
 func TestNew(t *testing.T) {

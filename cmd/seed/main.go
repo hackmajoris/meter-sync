@@ -18,7 +18,7 @@ import (
 
 	_ "github.com/mutecomm/go-sqlcipher/v4" // register sqlite3 driver
 
-	"github.com/hackmajoris/counters/pkg/store"
+	"github.com/hackmajoris/meter-sync/pkg/store"
 )
 
 func main() {

@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/hackmajoris/counters/pkg/store"
+	"github.com/hackmajoris/meter-sync/pkg/store"
 )
 
 func validDate(s string) bool {

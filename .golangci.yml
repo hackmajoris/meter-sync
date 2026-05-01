@@ -27,8 +27,7 @@ linters-settings:
       - name: package-comments
         disabled: true
   goimports:
-    local-prefixes:
-      - github.com/hackmajoris/counters
+    local-prefixes: github.com/hackmajoris/meter-sync
 
 issues:
   exclude-use-default: false

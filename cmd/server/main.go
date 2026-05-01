@@ -13,9 +13,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/hackmajoris/counters/pkg/api"
-	"github.com/hackmajoris/counters/pkg/store"
-	"github.com/hackmajoris/counters/pkg/web"
+	"github.com/hackmajoris/meter-sync/pkg/api"
+	"github.com/hackmajoris/meter-sync/pkg/store"
+	"github.com/hackmajoris/meter-sync/pkg/web"
 )
 
 func main() {

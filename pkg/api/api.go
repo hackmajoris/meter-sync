@@ -7,7 +7,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/hackmajoris/counters/pkg/store"
+	"github.com/hackmajoris/meter-sync/pkg/store"
 )
 
 // Handler provides HTTP handlers for the API.

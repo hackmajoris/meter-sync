@@ -1,4 +1,4 @@
-module github.com/hackmajoris/counters
+module github.com/hackmajoris/meter-sync
 
 go 1.25.0
 

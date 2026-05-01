@@ -5,93 +5,121 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: write
+
 jobs:
-  build:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: macos-13         # Intel runner — builds x64 dmg
-            goos: darwin
-            goarch: amd64
-            eb_arch: "--x64"
-          - os: macos-latest     # Apple Silicon runner — builds arm64 dmg
-            goos: darwin
-            goarch: arm64
-            eb_arch: "--arm64"
-          - os: windows-latest
-            goos: windows
-            goarch: amd64
-            eb_arch: "--x64"
-            bin_ext: ".exe"
-          - os: ubuntu-latest
-            goos: linux
-            goarch: amd64
-            eb_arch: "--x64"
-
-    runs-on: ${{ matrix.os }}
-
+  # Create the GitHub release
+  create-release:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+      - name: Create Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create ${{ github.ref_name }} --generate-notes --draft
 
+  # Builds macOS Electron DMG (Apple Silicon)
+  electron-mac:
+    needs: create-release
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
-
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
-
-      - name: Install Linux CGO deps
-        if: matrix.os == 'ubuntu-latest'
-        run: sudo apt-get install -y libssl-dev
-
-      - name: Build web (outputs to pkg/web/dist, embedded into Go binary)
+          node-version: '20'
+      - name: Build frontend
         run: cd web && npm ci && npm run build
+      - name: Build Go binary
+        run: |
+          mkdir -p electron/bin
+          go build -ldflags="-s -w" -o electron/bin/server ./cmd/server
+          codesign --sign - --force electron/bin/server
+      - name: Build Electron TypeScript
+        working-directory: electron
+        run: npm ci && npm run build
+      - name: Build Electron app (dir)
+        working-directory: electron
+        run: npx electron-builder --mac dir
+      - name: Deep-sign app bundle
+        run: |
+          APP=$(find electron/release -name "*.app" -maxdepth 3 | head -1)
+          codesign --deep --force --sign - "$APP"
+      - name: Package DMG
+        working-directory: electron
+        run: |
+          APP=$(find release -name "*.app" -maxdepth 3 | head -1)
+          npx electron-builder --mac dmg --prepackaged "$APP"
+      - name: Upload DMG to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload ${{ github.ref_name }} electron/release/*.dmg --clobber
 
-      - name: Build Go server
+  # Builds Windows Electron NSIS installer (x64)
+  electron-win:
+    needs: create-release
+    runs-on: windows-latest
+    defaults:
+      run:
         shell: bash
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+      - name: Build frontend
+        run: cd web && npm ci && npm run build
+      - name: Build Go binary
+        run: |
+          mkdir -p electron/bin
+          go build -ldflags="-s -w" -o electron/bin/server.exe ./cmd/server
+      - name: Build Electron TypeScript
+        working-directory: electron
+        run: npm ci && npm run build
+      - name: Build Electron Windows installer
+        working-directory: electron
+        run: npx electron-builder --win nsis
+      - name: Upload installer to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload ${{ github.ref_name }} electron/release/*.exe --clobber
+
+  # Builds Linux Electron AppImage (x64)
+  electron-linux:
+    needs: create-release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+      - name: Install CGO dependencies
+        run: sudo apt-get update && sudo apt-get install -y libssl-dev
+      - name: Build frontend
+        run: cd web && npm ci && npm run build
+      - name: Build Go binary
         env:
           CGO_ENABLED: "1"
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
         run: |
-          mkdir -p .bin
-          go build -tags release -ldflags="-s -w" -o .bin/server${{ matrix.bin_ext }} ./cmd/server
-
-      - name: Build Electron app
-        shell: bash
+          mkdir -p electron/bin
+          go build -ldflags="-s -w" -o electron/bin/server ./cmd/server
+      - name: Build Electron TypeScript
+        working-directory: electron
+        run: npm ci && npm run build
+      - name: Build Electron AppImage
+        working-directory: electron
+        run: npx electron-builder --linux AppImage
+      - name: Upload AppImage to release
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CSC_LINK: ${{ secrets.CSC_LINK }}
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: cd electron && npm ci && npx electron-builder ${{ matrix.eb_arch }}
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v7
-        with:
-          name: meter-sync-${{ matrix.goos }}-${{ matrix.goarch }}
-          path: |
-            electron/dist/*.dmg
-            electron/dist/*.exe
-            electron/dist/*.AppImage
-          if-no-files-found: warn
-
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/download-artifact@v8
-        with:
-          path: artifacts
-          merge-multiple: true
-
-      - uses: softprops/action-gh-release@v2
-        with:
-          files: artifacts/**
-          generate_release_notes: true
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload ${{ github.ref_name }} electron/release/*.AppImage --clobber
