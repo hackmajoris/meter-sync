@@ -2,9 +2,8 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main, master]
-    paths:
-      - "site/**"
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 permissions:
@@ -26,6 +25,28 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+
+      - name: Inject version into HTML
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${VERSION}"
+          REPO="hackmajoris/meter-sync"
+          BASE="https://github.com/${REPO}"
+
+          sed \
+            -e "s|__TAG__|${TAG}|g" \
+            -e "s|__VERSION__|${VERSION}|g" \
+            -e "s|__REPO_URL__|${BASE}|g" \
+            -e "s|__DMG_URL__|${BASE}/releases/download/${TAG}/MeterSync-arm64.dmg|g" \
+            -e "s|__WIN_URL__|${BASE}/releases/download/${TAG}/MeterSync-Setup-x64.exe|g" \
+            -e "s|__RELEASES_URL__|${BASE}/releases/tag/${TAG}|g" \
+            -e "s|__ISSUES_URL__|${BASE}/issues|g" \
+            site/index.html > site/index.out.html
+
+          mv site/index.out.html site/index.html
 
       - uses: actions/configure-pages@v5
 

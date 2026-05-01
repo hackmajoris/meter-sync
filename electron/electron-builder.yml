@@ -5,6 +5,7 @@ directories:
 files:
   - dist/**/*
 mac:
+  artifactName: ${productName}-${arch}.${ext}
   category: public.app-category.developer-tools
   identity: null
   gatekeeperAssess: false
@@ -15,6 +16,7 @@ mac:
       to: "web/dist"
 win:
   target: nsis
+  artifactName: ${productName}-Setup-${arch}.${ext}
   extraResources:
     - from: "bin/server.exe"
       to: "server.exe"
@@ -22,6 +24,7 @@ win:
       to: "web/dist"
 linux:
   target: AppImage
+  artifactName: ${productName}-${arch}.${ext}
   extraResources:
     - from: "bin/server"
       to: "server"
