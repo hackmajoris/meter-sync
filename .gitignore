@@ -6,3 +6,4 @@ electron/dist/
 *.env
 .idea
 data
+/seed

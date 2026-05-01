@@ -1,16 +1,19 @@
-.PHONY: build dev test lint fmt clean generate web-dev web-build electron-dev electron-build
+.PHONY: build dev test lint fmt clean generate seed web-dev web-build electron-dev electron-build
 
 APP := server
 BIN := .bin/$(APP)
 
 build: web-build
-	go build -ldflags="-s -w" -o $(BIN) ./cmd/$(APP)
+	go build -tags release -ldflags="-s -w" -o $(BIN) ./cmd/$(APP)
 
-dev: build
+dev:
 	@trap 'kill 0' SIGINT; \
-	$(BIN) & \
+	go run ./cmd/server & \
 	(cd web && npm run dev) & \
 	wait
+
+seed:
+	go run ./cmd/seed
 
 test:
 	go test -race -cover ./...
