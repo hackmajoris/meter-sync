@@ -1,5 +1,6 @@
 appId: com.hackmajoris.counters
 productName: MeterSync
+icon: build/icon.png
 directories:
   output: release
 files:
@@ -14,6 +15,8 @@ mac:
       to: "server"
     - from: "../pkg/web/dist"
       to: "web/dist"
+    - from: "build/icon.png"
+      to: "icon.png"
 win:
   target: nsis
   artifactName: ${productName}-Setup-${arch}.${ext}

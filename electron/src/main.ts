@@ -115,6 +115,7 @@ function createWindow(opts: {
     minWidth: opts.minWidth,
     minHeight: opts.minHeight,
     backgroundColor: "#0d0d12",
+    icon: appIconPath(),
     show: false,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
@@ -197,7 +198,14 @@ ipcMain.handle("reset-config", () => {
 
 // ---- app lifecycle ----
 
+function appIconPath(): string {
+  return app.isPackaged
+    ? path.join(process.resourcesPath, "icon.png")
+    : path.join(__dirname, "..", "build", "icon.png");
+}
+
 app.whenReady().then(async () => {
+  if (process.platform === "darwin") app.dock.setIcon(appIconPath());
   if (!isConfigured()) {
     createWindow({ width: 520, height: 640, resizable: false });
     mainWindow!.loadFile(spaIndexPath());
