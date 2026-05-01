@@ -43,7 +43,7 @@ jobs:
       - name: Build Go binary
         run: |
           mkdir -p electron/bin
-          go build -ldflags="-s -w" -o electron/bin/server ./cmd/server
+          go build -tags release -ldflags="-s -w" -o electron/bin/server ./cmd/server
           codesign --sign - --force electron/bin/server
       - name: Build Electron TypeScript
         working-directory: electron
@@ -93,7 +93,7 @@ jobs:
       - name: Build Go binary
         run: |
           mkdir -p electron/bin
-          go build -ldflags="-s -w" -o electron/bin/server.exe ./cmd/server
+          go build -tags release -ldflags="-s -w" -o electron/bin/server.exe ./cmd/server
       - name: Build Electron TypeScript
         working-directory: electron
         run: npm ci && npm run build
@@ -132,7 +132,7 @@ jobs:
           CGO_ENABLED: "1"
         run: |
           mkdir -p electron/bin
-          go build -ldflags="-s -w" -o electron/bin/server ./cmd/server
+          go build -tags release -ldflags="-s -w" -o electron/bin/server ./cmd/server
       - name: Build Electron TypeScript
         working-directory: electron
         run: npm ci && npm run build
