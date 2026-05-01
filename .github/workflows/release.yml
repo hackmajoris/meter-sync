@@ -53,13 +53,17 @@ jobs:
         run: |
           APP=$(find electron/release -name "*.app" -maxdepth 3 | head -1)
           codesign --deep --force --sign - "$APP"
-      - name: Package DMG and upload
+      - name: Package DMG
         working-directory: electron
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           APP=$(find release -name "*.app" -maxdepth 3 | head -1)
-          npx electron-builder --mac dmg --prepackaged "$APP" --publish always
+          npx electron-builder --mac dmg --prepackaged "$APP" --publish never
+      - name: Upload DMG to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          DMG=$(find electron/release -name "*.dmg" | head -1)
+          gh release upload ${{ github.ref_name }} "$DMG"
 
   # Builds Windows Electron NSIS installer (x64)
   electron-win:
@@ -87,9 +91,13 @@ jobs:
         run: npm ci && npm run build
       - name: Build Electron Windows installer
         working-directory: electron
+        run: npx electron-builder --win nsis --publish never
+      - name: Upload installer to release
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx electron-builder --win nsis --publish always
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          EXE=$(find electron/release -name "*.exe" | head -1)
+          gh release upload ${{ github.ref_name }} "$EXE"
 
   # Builds Linux Electron AppImage (x64)
   electron-linux:
@@ -118,6 +126,10 @@ jobs:
         run: npm ci && npm run build
       - name: Build Electron AppImage
         working-directory: electron
+        run: npx electron-builder --linux AppImage --publish never
+      - name: Upload AppImage to release
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx electron-builder --linux AppImage --publish always
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          APPIMAGE=$(find electron/release -name "*.AppImage" | head -1)
+          gh release upload ${{ github.ref_name }} "$APPIMAGE"
