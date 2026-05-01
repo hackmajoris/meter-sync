@@ -1,0 +1,15 @@
+appId: com.hackmajoris.counters
+productName: counters
+directories:
+  output: dist
+files:
+  - dist/**/*
+extraResources:
+  - from: "../.bin/server"
+    to: ".bin/server"
+mac:
+  category: public.app-category.developer-tools
+win:
+  target: nsis
+linux:
+  target: AppImage
