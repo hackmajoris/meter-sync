@@ -1,4 +1,4 @@
-version: "2"
+version: 2
 
 linters:
   enable:
@@ -7,30 +7,32 @@ linters:
     - staticcheck
     - misspell
     - revive
-  settings:
-    errcheck:
-      exclude-functions:
-        - (*database/sql.Rows).Close
-        - (*database/sql.Tx).Rollback
-        - (*database/sql.Stmt).Close
-        - (*database/sql.DB).Close
-    revive:
-      rules:
-        - name: exported
-          disabled: true
-        - name: package-comments
-          disabled: true
 
 formatters:
   enable:
     - gofmt
     - goimports
-  settings:
-    goimports:
-      local-prefixes:
-        - github.com/hackmajoris/counters
+
+linters-settings:
+  errcheck:
+    exclude-functions:
+      - (*database/sql.Rows).Close
+      - (*database/sql.Tx).Rollback
+      - (*database/sql.Stmt).Close
+      - (*database/sql.DB).Close
+  revive:
+    rules:
+      - name: exported
+        disabled: true
+      - name: package-comments
+        disabled: true
+  goimports:
+    local-prefixes:
+      - github.com/hackmajoris/counters
 
 issues:
-  exclude-dirs:
-    - web/node_modules
   exclude-use-default: false
+
+run:
+  skip-dirs:
+    - web/node_modules

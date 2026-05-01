@@ -45,7 +45,7 @@ function defaultDbPath(): string {
 function goBinPath(): string {
   const name = process.platform === "win32" ? "server.exe" : "server";
   return app.isPackaged
-    ? path.join(process.resourcesPath, ".bin", name)
+    ? path.join(process.resourcesPath, name)
     : path.join(__dirname, "..", "..", ".bin", name);
 }
 

@@ -1,3 +1,4 @@
+// Package example demonstrates the recommended structure for new packages.
 package example
 
 // Client is the main type for this package.

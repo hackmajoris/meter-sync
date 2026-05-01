@@ -58,7 +58,7 @@ func seed(path, key string) error {
 	if err != nil {
 		return fmt.Errorf("open db: %w", err)
 	}
-	defer db.Close()
+	defer db.Close() //nolint:errcheck
 
 	if _, err := db.Exec(`PRAGMA foreign_keys=ON`); err != nil {
 		return err
@@ -97,7 +97,7 @@ func seed(path, key string) error {
 	if err != nil {
 		return fmt.Errorf("begin tx: %w", err)
 	}
-	defer tx.Rollback()
+	defer tx.Rollback() //nolint:errcheck
 
 	stmt, err := tx.Prepare(
 		`INSERT OR IGNORE INTO entries (id, counter_id, date, value, note) VALUES (?, ?, ?, ?, '')`,
@@ -105,7 +105,7 @@ func seed(path, key string) error {
 	if err != nil {
 		return fmt.Errorf("prepare: %w", err)
 	}
-	defer stmt.Close()
+	defer stmt.Close() //nolint:errcheck
 
 	for _, c := range counters {
 		created := 0

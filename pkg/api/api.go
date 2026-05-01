@@ -1,3 +1,4 @@
+// Package api provides HTTP handlers for the counters REST API.
 package api
 
 import (
@@ -9,6 +10,7 @@ import (
 	"github.com/hackmajoris/counters/pkg/store"
 )
 
+// Handler provides HTTP handlers for the API.
 type Handler struct {
 	store *store.Store
 }

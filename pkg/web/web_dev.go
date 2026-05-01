@@ -1,5 +1,6 @@
 //go:build !release
 
+// Package web serves the frontend single-page application.
 package web
 
 import "net/http"

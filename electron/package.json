@@ -2,6 +2,7 @@
   "name": "counters-electron",
   "version": "0.1.0",
   "description": "Electron shell for counters",
+  "main": "dist/main.js",
   "author": "hackmajoris",
   "private": true,
   "repository": {

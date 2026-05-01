@@ -1,3 +1,4 @@
+// Command server runs the HTTP server for the counters application.
 package main
 
 import (

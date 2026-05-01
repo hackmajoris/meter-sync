@@ -1,3 +1,4 @@
+// Package store provides an encrypted SQLite data layer for houses, counters, and entries.
 package store
 
 import (
@@ -12,6 +13,7 @@ import (
 	_ "github.com/mutecomm/go-sqlcipher/v4" // register sqlite3 driver with AES-256 encryption support
 )
 
+// ErrNotFound is returned when a requested resource is not found.
 var (
 	ErrNotFound = errors.New("not found")
 	ErrConflict = errors.New("conflict")
@@ -35,11 +37,13 @@ func conflict(format string, args ...any) error {
 
 // ---- domain types ----
 
+// House represents a physical location that contains counters.
 type House struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
 }
 
+// Counter represents a meter or measurement device.
 type Counter struct {
 	ID      string `json:"id"`
 	Name    string `json:"name"`
@@ -48,6 +52,7 @@ type Counter struct {
 	HouseID string `json:"houseId"`
 }
 
+// Entry represents a single reading from a counter.
 type Entry struct {
 	ID    string  `json:"id"`
 	Date  string  `json:"date"`
@@ -55,6 +60,7 @@ type Entry struct {
 	Note  string  `json:"note"`
 }
 
+// Stats contains aggregated statistics for a counter.
 type Stats struct {
 	Avg   float64 `json:"avg"`
 	Total float64 `json:"total"`
@@ -63,6 +69,7 @@ type Stats struct {
 	Count int     `json:"count"`
 }
 
+// EntryFilters provides filtering options for querying entries.
 type EntryFilters struct {
 	StartDate string
 	EndDate   string
@@ -70,11 +77,13 @@ type EntryFilters struct {
 	Limit     int
 }
 
+// StatsFilters provides filtering options for computing statistics.
 type StatsFilters struct {
 	StartDate string
 	EndDate   string
 }
 
+// CreateCounterInput holds parameters for creating a new counter.
 type CreateCounterInput struct {
 	Name    string
 	Unit    string
@@ -82,6 +91,7 @@ type CreateCounterInput struct {
 	HouseID string
 }
 
+// UpdateCounterInput holds parameters for updating an existing counter.
 type UpdateCounterInput struct {
 	Name    string
 	Unit    string
@@ -89,24 +99,28 @@ type UpdateCounterInput struct {
 	HouseID string
 }
 
+// CreateEntryInput holds parameters for creating a new entry.
 type CreateEntryInput struct {
 	Date  string
 	Value float64
 	Note  string
 }
 
+// UpdateEntryInput holds parameters for updating an existing entry.
 type UpdateEntryInput struct {
 	Date  string
 	Value float64
 	Note  string
 }
 
+// BulkEntryInput holds parameters for a single entry in a bulk operation.
 type BulkEntryInput struct {
 	Date  string  `json:"date"`
 	Value float64 `json:"value"`
 	Note  string  `json:"note"`
 }
 
+// BulkResult contains the results of a bulk entry creation operation.
 type BulkResult struct {
 	Created int      `json:"created"`
 	Skipped int      `json:"skipped"`
@@ -115,10 +129,12 @@ type BulkResult struct {
 
 // ---- store ----
 
+// Store provides access to the encrypted SQLite database.
 type Store struct {
 	db *sql.DB
 }
 
+// Option is a functional option for configuring a Store.
 type Option func(*Store)
 
 // migrations holds sequential schema changes; index 0 = migration 1.
@@ -155,6 +171,7 @@ func buildDSN(path, key string) string {
 		"&_pragma_cipher_page_size=4096"
 }
 
+// New creates a new Store, opening the database and running migrations.
 func New(path, key string, opts ...Option) (*Store, error) {
 	db, err := sql.Open("sqlite3", buildDSN(path, key))
 	if err != nil {
@@ -167,16 +184,17 @@ func New(path, key string, opts ...Option) (*Store, error) {
 		o(s)
 	}
 	if err := s.setupConn(); err != nil {
-		db.Close()
+		_ = db.Close()
 		return nil, fmt.Errorf("setup connection: %w", err)
 	}
 	if err := s.migrate(); err != nil {
-		db.Close()
+		_ = db.Close()
 		return nil, fmt.Errorf("migrate: %w", err)
 	}
 	return s, nil
 }
 
+// Close closes the database connection.
 func (s *Store) Close() error { return s.db.Close() }
 
 // setupConn runs per-connection pragmas (not persisted across connections).
@@ -233,12 +251,13 @@ func isUniqueConflict(err error) bool {
 
 // ---- houses ----
 
+// Houses returns all houses in the database.
 func (s *Store) Houses(ctx context.Context) ([]House, error) {
 	rows, err := s.db.QueryContext(ctx, `SELECT id, name FROM houses ORDER BY name`)
 	if err != nil {
 		return nil, fmt.Errorf("query houses: %w", err)
 	}
-	defer rows.Close()
+	defer rows.Close() //nolint:errcheck
 	out := make([]House, 0)
 	for rows.Next() {
 		var h House
@@ -250,6 +269,7 @@ func (s *Store) Houses(ctx context.Context) ([]House, error) {
 	return out, rows.Err()
 }
 
+// House returns a single house by ID.
 func (s *Store) House(ctx context.Context, id string) (House, error) {
 	var h House
 	err := s.db.QueryRowContext(ctx, `SELECT id, name FROM houses WHERE id = ?`, id).
@@ -263,6 +283,7 @@ func (s *Store) House(ctx context.Context, id string) (House, error) {
 	return h, nil
 }
 
+// CreateHouse creates a new house with the given name.
 func (s *Store) CreateHouse(ctx context.Context, name string) (House, error) {
 	h := House{ID: newID(), Name: name}
 	if _, err := s.db.ExecContext(ctx, `INSERT INTO houses (id, name) VALUES (?, ?)`, h.ID, h.Name); err != nil {
@@ -271,6 +292,7 @@ func (s *Store) CreateHouse(ctx context.Context, name string) (House, error) {
 	return h, nil
 }
 
+// UpdateHouse updates the name of an existing house.
 func (s *Store) UpdateHouse(ctx context.Context, id, name string) (House, error) {
 	res, err := s.db.ExecContext(ctx, `UPDATE houses SET name = ? WHERE id = ?`, name, id)
 	if err != nil {
@@ -282,6 +304,7 @@ func (s *Store) UpdateHouse(ctx context.Context, id, name string) (House, error)
 	return House{ID: id, Name: name}, nil
 }
 
+// DeleteHouse deletes a house by ID, returning an error if it has associated counters.
 func (s *Store) DeleteHouse(ctx context.Context, id string) error {
 	var count int
 	if err := s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM counters WHERE house_id = ?`, id).Scan(&count); err != nil {
@@ -302,6 +325,7 @@ func (s *Store) DeleteHouse(ctx context.Context, id string) error {
 
 // ---- counters ----
 
+// Counters returns all counters, optionally filtered by house ID.
 func (s *Store) Counters(ctx context.Context, houseID string) ([]Counter, error) {
 	q := `SELECT id, name, unit, color, house_id FROM counters`
 	args := []any{}
@@ -314,7 +338,7 @@ func (s *Store) Counters(ctx context.Context, houseID string) ([]Counter, error)
 	if err != nil {
 		return nil, fmt.Errorf("query counters: %w", err)
 	}
-	defer rows.Close()
+	defer rows.Close() //nolint:errcheck
 	out := make([]Counter, 0)
 	for rows.Next() {
 		var c Counter
@@ -326,6 +350,7 @@ func (s *Store) Counters(ctx context.Context, houseID string) ([]Counter, error)
 	return out, rows.Err()
 }
 
+// Counter returns a single counter by ID.
 func (s *Store) Counter(ctx context.Context, id string) (Counter, error) {
 	var c Counter
 	err := s.db.QueryRowContext(ctx, `SELECT id, name, unit, color, house_id FROM counters WHERE id = ?`, id).
@@ -339,6 +364,7 @@ func (s *Store) Counter(ctx context.Context, id string) (Counter, error) {
 	return c, nil
 }
 
+// CreateCounter creates a new counter.
 func (s *Store) CreateCounter(ctx context.Context, in CreateCounterInput) (Counter, error) {
 	var exists int
 	if err := s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM houses WHERE id = ?`, in.HouseID).Scan(&exists); err != nil {
@@ -356,6 +382,7 @@ func (s *Store) CreateCounter(ctx context.Context, in CreateCounterInput) (Count
 	return c, nil
 }
 
+// UpdateCounter updates an existing counter.
 func (s *Store) UpdateCounter(ctx context.Context, id string, in UpdateCounterInput) (Counter, error) {
 	var exists int
 	if err := s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM houses WHERE id = ?`, in.HouseID).Scan(&exists); err != nil {
@@ -376,12 +403,13 @@ func (s *Store) UpdateCounter(ctx context.Context, id string, in UpdateCounterIn
 	return Counter{ID: id, Name: in.Name, Unit: in.Unit, Color: in.Color, HouseID: in.HouseID}, nil
 }
 
+// DeleteCounter deletes a counter and all its entries.
 func (s *Store) DeleteCounter(ctx context.Context, id string) error {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("begin tx: %w", err)
 	}
-	defer tx.Rollback()
+	defer tx.Rollback() //nolint:errcheck
 
 	if _, err := tx.ExecContext(ctx, `DELETE FROM entries WHERE counter_id = ?`, id); err != nil {
 		return fmt.Errorf("delete entries: %w", err)
@@ -398,6 +426,7 @@ func (s *Store) DeleteCounter(ctx context.Context, id string) error {
 
 // ---- entries ----
 
+// Entries returns all entries for a counter, optionally filtered by date range, with pagination support.
 func (s *Store) Entries(ctx context.Context, counterID string, f EntryFilters) ([]Entry, error) {
 	q := `SELECT id, date, value, note FROM entries WHERE counter_id = ?`
 	args := []any{counterID}
@@ -425,7 +454,7 @@ func (s *Store) Entries(ctx context.Context, counterID string, f EntryFilters) (
 	if err != nil {
 		return nil, fmt.Errorf("query entries: %w", err)
 	}
-	defer rows.Close()
+	defer rows.Close() //nolint:errcheck
 	out := make([]Entry, 0)
 	for rows.Next() {
 		var e Entry
@@ -437,6 +466,7 @@ func (s *Store) Entries(ctx context.Context, counterID string, f EntryFilters) (
 	return out, rows.Err()
 }
 
+// Entry returns a single entry by counter ID and entry ID.
 func (s *Store) Entry(ctx context.Context, counterID, id string) (Entry, error) {
 	var e Entry
 	err := s.db.QueryRowContext(ctx,
@@ -451,6 +481,7 @@ func (s *Store) Entry(ctx context.Context, counterID, id string) (Entry, error) 
 	return e, nil
 }
 
+// CreateEntry creates a new entry, or updates an existing entry for the same date.
 func (s *Store) CreateEntry(ctx context.Context, counterID string, in CreateEntryInput) (Entry, error) {
 	var exists int
 	if err := s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM counters WHERE id = ?`, counterID).Scan(&exists); err != nil {
@@ -477,6 +508,7 @@ func (s *Store) CreateEntry(ctx context.Context, counterID string, in CreateEntr
 	return e, nil
 }
 
+// UpdateEntry updates an existing entry.
 func (s *Store) UpdateEntry(ctx context.Context, counterID, id string, in UpdateEntryInput) (Entry, error) {
 	res, err := s.db.ExecContext(ctx,
 		`UPDATE entries SET date = ?, value = ?, note = ? WHERE id = ? AND counter_id = ?`,
@@ -493,6 +525,7 @@ func (s *Store) UpdateEntry(ctx context.Context, counterID, id string, in Update
 	return Entry{ID: id, Date: in.Date, Value: in.Value, Note: in.Note}, nil
 }
 
+// DeleteEntry deletes an entry by counter ID and entry ID.
 func (s *Store) DeleteEntry(ctx context.Context, counterID, id string) error {
 	res, err := s.db.ExecContext(ctx, `DELETE FROM entries WHERE id = ? AND counter_id = ?`, id, counterID)
 	if err != nil {
@@ -504,6 +537,7 @@ func (s *Store) DeleteEntry(ctx context.Context, counterID, id string) error {
 	return nil
 }
 
+// BulkCreateEntries creates multiple entries in a single transaction.
 func (s *Store) BulkCreateEntries(ctx context.Context, counterID string, entries []BulkEntryInput, skipExisting bool) (BulkResult, error) {
 	var exists int
 	if err := s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM counters WHERE id = ?`, counterID).Scan(&exists); err != nil {
@@ -517,7 +551,7 @@ func (s *Store) BulkCreateEntries(ctx context.Context, counterID string, entries
 	if err != nil {
 		return BulkResult{}, fmt.Errorf("begin tx: %w", err)
 	}
-	defer tx.Rollback()
+	defer tx.Rollback() //nolint:errcheck
 
 	var result BulkResult
 	result.Errors = make([]string, 0)
@@ -556,6 +590,7 @@ func (s *Store) BulkCreateEntries(ctx context.Context, counterID string, entries
 
 // ---- stats ----
 
+// CounterStats computes aggregated statistics for a counter, optionally filtered by date range.
 func (s *Store) CounterStats(ctx context.Context, counterID string, f StatsFilters) (Stats, error) {
 	q := `SELECT AVG(value), SUM(value), MAX(value), MIN(value), COUNT(*) FROM entries WHERE counter_id = ?`
 	args := []any{counterID}

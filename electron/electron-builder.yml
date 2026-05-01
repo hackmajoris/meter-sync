@@ -6,16 +6,24 @@ files:
   - dist/**/*
 mac:
   category: public.app-category.developer-tools
+  identity: null
+  gatekeeperAssess: false
   extraResources:
-    - from: "../.bin/server"
-      to: ".bin/server"
+    - from: "bin/server"
+      to: "server"
+    - from: "../pkg/web/dist"
+      to: "web/dist"
 win:
   target: nsis
   extraResources:
-    - from: "../.bin/server.exe"
-      to: ".bin/server.exe"
+    - from: "bin/server.exe"
+      to: "server.exe"
+    - from: "../pkg/web/dist"
+      to: "web/dist"
 linux:
   target: AppImage
   extraResources:
-    - from: "../.bin/server"
-      to: ".bin/server"
+    - from: "bin/server"
+      to: "server"
+    - from: "../pkg/web/dist"
+      to: "web/dist"
