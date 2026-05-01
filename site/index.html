@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MeterSync — Track your utilities</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #080810;
+    --bg2: #0e0e1a;
+    --bg3: #14141f;
+    --bg4: #1c1c2a;
+    --border: rgba(255,255,255,0.06);
+    --border2: rgba(255,255,255,0.11);
+    --text: #eeeef8;
+    --text2: #8888a8;
+    --text3: #44445a;
+    --accent: #3b82f6;
+    --accent2: #8b5cf6;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Noise texture overlay ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    opacity: 0.4;
+  }
+
+  #root { position: relative; z-index: 1; }
+
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 99px; }
+
+  /* ── Keyframes ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(28px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-10px); }
+  }
+  @keyframes pulse-ring {
+    0%   { transform: scale(1);   opacity: 0.6; }
+    100% { transform: scale(2.2); opacity: 0; }
+  }
+  @keyframes shimmer {
+    from { background-position: -400px 0; }
+    to   { background-position: 400px 0; }
+  }
+  @keyframes dot-appear {
+    from { opacity: 0; transform: scale(0.5); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
+  .fade-up { animation: fadeUp 0.7s ease both; }
+  .delay-1 { animation-delay: 0.1s; }
+  .delay-2 { animation-delay: 0.22s; }
+  .delay-3 { animation-delay: 0.34s; }
+  .delay-4 { animation-delay: 0.46s; }
+
+  /* ── Glow blobs ── */
+  .blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(100px);
+    pointer-events: none;
+    opacity: 0.18;
+  }
+
+  /* ── macOS Window ── */
+  .macos-window {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.13);
+    box-shadow:
+      0 0 0 1px rgba(0,0,0,0.5),
+      0 40px 120px rgba(0,0,0,0.7),
+      0 0 80px rgba(59,130,246,0.08);
+    background: #0a0a12;
+    animation: float 6s ease-in-out infinite;
+  }
+  .macos-titlebar {
+    height: 38px;
+    background: #111120;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .macos-dot {
+    width: 12px; height: 12px; border-radius: 50%;
+    animation: dot-appear 0.4s ease both;
+  }
+  .macos-dot.red   { background: #ff5f57; box-shadow: 0 0 6px #ff5f5788; animation-delay: 0s; }
+  .macos-dot.yellow { background: #ffbd2e; box-shadow: 0 0 6px #ffbd2e88; animation-delay: 0.07s; }
+  .macos-dot.green  { background: #28c840; box-shadow: 0 0 6px #28c84088; animation-delay: 0.14s; }
+  .macos-title {
+    flex: 1; text-align: center;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px; color: var(--text3);
+    font-weight: 400;
+    margin-right: 60px;
+  }
+  .macos-screenshot {
+    width: 100%; display: block;
+    object-fit: cover;
+    transition: opacity 0.45s ease;
+  }
+
+  /* ── Screenshot dots ── */
+  .carousel-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--border2);
+    border: none; cursor: pointer;
+    padding: 0; transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .carousel-dot.active {
+    width: 20px; border-radius: 3px;
+    background: var(--accent);
+  }
+
+  /* ── Feature card ── */
+  .feature-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 28px 26px;
+    transition: border-color 0.25s, transform 0.25s;
+    position: relative;
+    overflow: hidden;
+  }
+  .feature-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(59,130,246,0.04) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .feature-card:hover { border-color: var(--border2); transform: translateY(-3px); }
+  .feature-card:hover::before { opacity: 1; }
+
+  /* ── Download buttons ── */
+  .dl-btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 14px 24px; border-radius: 14px;
+    font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500;
+    cursor: pointer; border: none; text-decoration: none;
+    transition: all 0.2s ease;
+    position: relative; overflow: hidden;
+  }
+  .dl-btn::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.07), transparent);
+  }
+  .dl-btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+    box-shadow: 0 8px 32px rgba(59,130,246,0.35);
+  }
+  .dl-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(59,130,246,0.45); }
+  .dl-btn-secondary {
+    background: var(--bg3);
+    color: var(--text2);
+    border: 1px solid var(--border2);
+  }
+  .dl-btn-secondary:hover { background: var(--bg4); color: var(--text); transform: translateY(-2px); }
+
+  /* ── Nav ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+    height: 60px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 48px;
+    background: rgba(8, 8, 16, 0.7);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo {
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'Outfit', sans-serif; font-size: 17px; font-weight: 700;
+    letter-spacing: -0.03em; color: var(--text); text-decoration: none;
+  }
+  .nav-logo-icon {
+    width: 30px; height: 30px; border-radius: 8px;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .nav-links {
+    display: flex; gap: 28px; list-style: none;
+  }
+  .nav-links a {
+    color: var(--text2); text-decoration: none; font-size: 14px;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--text); }
+  .nav-cta {
+    background: var(--accent);
+    color: #fff; border: none; border-radius: 10px;
+    padding: 8px 18px; font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 500; cursor: pointer;
+    text-decoration: none;
+    transition: opacity 0.2s;
+    box-shadow: 0 4px 16px rgba(59,130,246,0.3);
+  }
+  .nav-cta:hover { opacity: 0.85; }
+
+  /* ── Badge ── */
+  .badge {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 6px 14px; border-radius: 99px;
+    background: rgba(59,130,246,0.1);
+    border: 1px solid rgba(59,130,246,0.25);
+    font-size: 12px; color: #93c5fd;
+    font-weight: 500; letter-spacing: 0.02em;
+  }
+  .badge-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #3b82f6;
+    position: relative;
+  }
+  .badge-dot::after {
+    content: '';
+    position: absolute; inset: -4px;
+    border-radius: 50%;
+    background: #3b82f6;
+    animation: pulse-ring 1.8s ease-out infinite;
+  }
+
+  /* ── Section ── */
+  .section { padding: 100px 48px; max-width: 1100px; margin: 0 auto; }
+  .section-label {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--text3); margin-bottom: 12px;
+  }
+  .section-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: clamp(30px, 4vw, 46px);
+    font-weight: 700; line-height: 1.1;
+    letter-spacing: -0.03em;
+  }
+
+  /* ── Footer ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 36px 48px;
+    display: flex; align-items: center; justify-content: space-between;
+    color: var(--text3); font-size: 13px;
+  }
+
+  /* ── Divider ── */
+  .divider {
+    height: 1px; background: linear-gradient(to right, transparent, var(--border2), transparent);
+    margin: 0 48px;
+  }
+
+  /* ── Shimmer text ── */
+  .shimmer-text {
+    background: linear-gradient(90deg, #3b82f6 0%, #a78bfa 30%, #ec4899 60%, #3b82f6 100%);
+    background-size: 400px 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmer 4s linear infinite;
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+// ─── Screenshots ──────────────────────────────────────────────────────────────
+const SCREENSHOTS = [
+  {
+    src: 'uploads/Screenshot 2026-05-01 at 7.27.50 PM.png',
+    label: 'MeterSync — Electricity Dashboard',
+    caption: 'Track daily electricity usage with line & bar charts'
+  },
+  {
+    src: 'uploads/Screenshot 2026-05-01 at 7.28.11 PM.png',
+    label: 'MeterSync — Gas Dashboard',
+    caption: 'Monthly gas consumption at a glance'
+  },
+  {
+    src: 'uploads/Screenshot 2026-05-01 at 7.28.27 PM.png',
+    label: 'MeterSync — Expanded Chart',
+    caption: 'Full-screen chart with avg line & trend overlay'
+  },
+  {
+    src: 'uploads/Screenshot 2026-05-01 at 7.28.46 PM.png',
+    label: 'MeterSync — Water Monthly View',
+    caption: 'Monthly bar chart view for water usage'
+  },
+  {
+    src: 'uploads/Screenshot 2026-05-01 at 7.29.16 PM.png',
+    label: 'MeterSync — Settings & Database',
+    caption: 'Encrypted local database with custom file location'
+  },
+  {
+    src: 'uploads/Screenshot 2026-05-01 at 7.29.37 PM.png',
+    label: 'MeterSync — CSV Import/Export',
+    caption: 'Bulk import and export data via CSV'
+  },
+  {
+    src: 'uploads/Screenshot 2026-05-01 at 7.30.08 PM.png',
+    label: 'MeterSync — New Counter',
+    caption: 'Create counters with custom name, unit, and colour'
+  },
+];
+
+// ─── Icons ────────────────────────────────────────────────────────────────────
+const IconApple = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+  </svg>
+);
+const IconWindows = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M3 12V6.75l6-1.32v6.57H3zm17 0V4.5l-8 1.77v5.73h8zM3 13.25V19.5l6 1.32v-7.57H3zm17 0V21l-8-1.77v-5.98h8z"/>
+  </svg>
+);
+const IconGitHub = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
+  </svg>
+);
+const IconDownload = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+  </svg>
+);
+const IconChevronLeft = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+);
+const IconChevronRight = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+);
+
+// ─── macOS Window Carousel ────────────────────────────────────────────────────
+function MacOSWindow() {
+  const [idx, setIdx] = useState(0);
+  const [fading, setFading] = useState(false);
+  const timerRef = useRef(null);
+
+  const goTo = useCallback((next) => {
+    setFading(true);
+    setTimeout(() => {
+      setIdx((next + SCREENSHOTS.length) % SCREENSHOTS.length);
+      setFading(false);
+    }, 220);
+  }, []);
+
+  useEffect(() => {
+    timerRef.current = setInterval(() => goTo(idx + 1), 4500);
+    return () => clearInterval(timerRef.current);
+  }, [idx, goTo]);
+
+  const current = SCREENSHOTS[idx];
+
+  return (
+    <div style={{ position: 'relative' }}>
+      {/* Window frame */}
+      <div className="macos-window" style={{ maxWidth: 880, margin: '0 auto' }}>
+        <div className="macos-titlebar">
+          <div className="macos-dot red" />
+          <div className="macos-dot yellow" />
+          <div className="macos-dot green" />
+          <span className="macos-title">{current.label}</span>
+        </div>
+        <div style={{ position: 'relative', background: '#080810', lineHeight: 0 }}>
+          <img
+            src={current.src}
+            alt={current.label}
+            className="macos-screenshot"
+            style={{ opacity: fading ? 0 : 1 }}
+          />
+          {/* Arrows */}
+          <button
+            onClick={() => { clearInterval(timerRef.current); goTo(idx - 1); }}
+            style={{
+              position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)',
+              background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10,
+              width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', color: '#fff', transition: 'background 0.15s'
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(59,130,246,0.4)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.5)'}
+          >
+            <IconChevronLeft />
+          </button>
+          <button
+            onClick={() => { clearInterval(timerRef.current); goTo(idx + 1); }}
+            style={{
+              position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)',
+              background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10,
+              width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', color: '#fff', transition: 'background 0.15s'
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(59,130,246,0.4)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.5)'}
+          >
+            <IconChevronRight />
+          </button>
+        </div>
+      </div>
+
+      {/* Caption + Dots */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, marginTop: 22 }}>
+        <div style={{ color: 'var(--text2)', fontSize: 13, height: 18, transition: 'opacity 0.3s', opacity: fading ? 0 : 1 }}>
+          {current.caption}
+        </div>
+        <div style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
+          {SCREENSHOTS.map((_, i) => (
+            <button
+              key={i}
+              className={`carousel-dot ${i === idx ? 'active' : ''}`}
+              onClick={() => { clearInterval(timerRef.current); goTo(i); }}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Feature Card ─────────────────────────────────────────────────────────────
+function FeatureCard({ icon, title, desc, accentColor = '#3b82f6' }) {
+  return (
+    <div className="feature-card">
+      <div style={{
+        width: 44, height: 44, borderRadius: 12, marginBottom: 18,
+        background: accentColor + '18',
+        display: 'flex', alignItems: 'center', justifyContent: 'center'
+      }}>
+        {icon(accentColor)}
+      </div>
+      <div style={{ fontFamily: 'Outfit', fontSize: 16, fontWeight: 600, marginBottom: 8 }}>{title}</div>
+      <div style={{ color: 'var(--text2)', fontSize: 14, lineHeight: 1.65 }}>{desc}</div>
+    </div>
+  );
+}
+
+const FEATURES = [
+  {
+    accentColor: '#3b82f6',
+    title: 'Multi-counter tracking',
+    desc: 'Add any number of counters for electricity, gas, water, or custom meters — each with its own unit and colour.',
+    icon: (c) => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round"><rect x="2" y="3" width="7" height="9"/><rect x="15" y="3" width="7" height="5"/><rect x="15" y="12" width="7" height="9"/><rect x="2" y="16" width="7" height="5"/></svg>
+  },
+  {
+    accentColor: '#06b6d4',
+    title: 'Rich charts',
+    desc: 'Line and bar charts with daily & monthly views, expandable fullscreen mode, average line, and trend overlay.',
+    icon: (c) => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+  },
+  {
+    accentColor: '#10b981',
+    title: 'CSV import & export',
+    desc: 'Bulk-load years of history from a CSV file, or export your data at any time for use in Excel or other tools.',
+    icon: (c) => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+  },
+  {
+    accentColor: '#f59e0b',
+    title: 'Encrypted local database',
+    desc: 'Your data stays on your machine in a password-encrypted SQLite file. Nothing is sent to the cloud.',
+    icon: (c) => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+  },
+  {
+    accentColor: '#8b5cf6',
+    title: 'Multiple houses',
+    desc: 'Organise counters by property. Manage your home, a rental, or a holiday cottage — all in one app.',
+    icon: (c) => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+  },
+  {
+    accentColor: '#ec4899',
+    title: 'Stat summaries',
+    desc: 'See today vs yesterday, daily average, total, peak, and lowest — all computed automatically from your entries.',
+    icon: (c) => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+  },
+];
+
+// ─── Download Section ─────────────────────────────────────────────────────────
+function DownloadSection() {
+  const GITHUB = 'https://github.com/';
+
+  const btnStyle = {
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    gap: 16, padding: '18px 22px', borderRadius: 16,
+    background: 'var(--bg3)', border: '1px solid var(--border2)',
+    cursor: 'pointer', textDecoration: 'none',
+    transition: 'all 0.2s', color: 'var(--text)',
+    width: '100%',
+  };
+
+  return (
+    <div style={{
+      background: 'var(--bg2)', border: '1px solid var(--border)',
+      borderRadius: 24, padding: '48px 40px',
+      display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32,
+      alignItems: 'center'
+    }}>
+      {/* Left: headline */}
+      <div>
+        <div className="section-label" style={{ marginBottom: 14 }}>Download</div>
+        <div style={{ fontFamily: 'Outfit', fontSize: 36, fontWeight: 700, lineHeight: 1.1, letterSpacing: '-0.03em', marginBottom: 14 }}>
+          Free &amp; open<br/>
+          <span className="shimmer-text">source</span>
+        </div>
+        <div style={{ color: 'var(--text2)', fontSize: 14, lineHeight: 1.7, maxWidth: 320 }}>
+          MeterSync is free forever. Download the native Electron app for macOS or Windows,
+          or build from source — the code is on GitHub.
+        </div>
+        <div style={{ marginTop: 22, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <a href={GITHUB} className="dl-btn dl-btn-primary" target="_blank" rel="noopener">
+            <IconApple />
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ fontSize: 11, opacity: 0.75, fontWeight: 400 }}>Download for</div>
+              <div style={{ fontSize: 15, fontWeight: 600 }}>macOS</div>
+            </div>
+            <IconDownload />
+          </a>
+          <a href={GITHUB} className="dl-btn dl-btn-secondary" target="_blank" rel="noopener">
+            <IconWindows />
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ fontSize: 11, opacity: 0.75, fontWeight: 400 }}>Download for</div>
+              <div style={{ fontSize: 15, fontWeight: 600 }}>Windows</div>
+            </div>
+            <IconDownload />
+          </a>
+        </div>
+      </div>
+
+      {/* Right: secondary links */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {[
+          { label: 'Source code', sub: 'github.com/metersync', icon: <IconGitHub /> },
+          { label: 'Release notes', sub: 'v1.0.0 — May 2026', icon: (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          )},
+          { label: 'Report an issue', sub: 'Open a GitHub issue', icon: (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          )},
+        ].map(({ label, sub, icon }) => (
+          <a key={label} href={GITHUB} target="_blank" rel="noopener"
+            style={btnStyle}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; e.currentTarget.style.background = 'var(--bg4)'; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border2)'; e.currentTarget.style.background = 'var(--bg3)'; }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div style={{ color: 'var(--text2)' }}>{icon}</div>
+              <div>
+                <div style={{ fontWeight: 500, fontSize: 14 }}>{label}</div>
+                <div style={{ color: 'var(--text3)', fontSize: 12, marginTop: 1 }}>{sub}</div>
+              </div>
+            </div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" strokeWidth="2.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── App ──────────────────────────────────────────────────────────────────────
+function App() {
+  return (
+    <>
+      {/* ── Nav ── */}
+      <nav>
+        <a className="nav-logo" href="#">
+          <div className="nav-logo-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+          </div>
+          MeterSync
+        </a>
+        <ul className="nav-links">
+          <li><a href="#features">Features</a></li>
+          <li><a href="#download">Download</a></li>
+          <li><a href="https://github.com/" target="_blank" rel="noopener">GitHub</a></li>
+        </ul>
+        <a href="#download" className="nav-cta">Download free</a>
+      </nav>
+
+      {/* ── Hero ── */}
+      <div style={{ position: 'relative', overflow: 'hidden', paddingTop: 160, paddingBottom: 80 }}>
+        {/* Background blobs */}
+        <div className="blob" style={{ width: 600, height: 600, background: '#3b82f6', top: -200, left: -200 }} />
+        <div className="blob" style={{ width: 500, height: 500, background: '#8b5cf6', top: -100, right: -150 }} />
+        <div className="blob" style={{ width: 400, height: 400, background: '#06b6d4', bottom: 0, left: '40%' }} />
+
+        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 48px', textAlign: 'center', position: 'relative' }}>
+          {/* Badge */}
+          <div className="fade-up" style={{ display: 'flex', justifyContent: 'center', marginBottom: 28 }}>
+            <div className="badge">
+              <div className="badge-dot" />
+              Open source · Free forever
+            </div>
+          </div>
+
+          {/* Headline */}
+          <h1 className="fade-up delay-1" style={{
+            fontFamily: 'Outfit', fontSize: 'clamp(42px, 7vw, 80px)',
+            fontWeight: 800, lineHeight: 1.02, letterSpacing: '-0.04em',
+            marginBottom: 24
+          }}>
+            Know exactly how<br/>
+            much you <span className="shimmer-text">consume</span>
+          </h1>
+
+          {/* Subheading */}
+          <p className="fade-up delay-2" style={{
+            color: 'var(--text2)', fontSize: 'clamp(16px, 2vw, 20px)',
+            lineHeight: 1.65, maxWidth: 540, margin: '0 auto 44px',
+            fontWeight: 300
+          }}>
+            MeterSync is a private, open-source desktop app for tracking electricity,
+            gas, water, and any custom utility meter — with beautiful charts and zero cloud.
+          </p>
+
+          {/* CTA row */}
+          <div className="fade-up delay-3" style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 80 }}>
+            <a href="#download" className="dl-btn dl-btn-primary" style={{ fontSize: 16, padding: '14px 28px' }}>
+              <IconDownload />
+              Download for macOS
+            </a>
+            <a href="https://github.com/" target="_blank" rel="noopener" className="dl-btn dl-btn-secondary" style={{ fontSize: 16, padding: '14px 28px' }}>
+              <IconGitHub />
+              View on GitHub
+            </a>
+          </div>
+
+          {/* macOS window */}
+          <div className="fade-up delay-4">
+            <MacOSWindow />
+          </div>
+        </div>
+      </div>
+
+      <div className="divider" />
+
+      {/* ── Features ── */}
+      <div id="features" className="section">
+        <div style={{ marginBottom: 52, textAlign: 'center' }}>
+          <div className="section-label">What's inside</div>
+          <h2 className="section-title">Everything you need,<br/>nothing you don't</h2>
+        </div>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+          gap: 16
+        }}>
+          {FEATURES.map(f => (
+            <FeatureCard key={f.title} {...f} />
+          ))}
+        </div>
+      </div>
+
+      <div className="divider" />
+
+      {/* ── Privacy callout ── */}
+      <div className="section" style={{ paddingTop: 80, paddingBottom: 80 }}>
+        <div style={{
+          display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40,
+          alignItems: 'center'
+        }}>
+          <div>
+            <div className="section-label">Privacy first</div>
+            <h2 className="section-title" style={{ marginBottom: 18 }}>Your data,<br/><span className="shimmer-text">your machine</span></h2>
+            <p style={{ color: 'var(--text2)', fontSize: 15, lineHeight: 1.7, maxWidth: 400 }}>
+              MeterSync stores everything in an encrypted SQLite database that lives wherever you choose on your disk.
+              No accounts, no sync, no telemetry. When you close the app, your data is yours alone.
+            </p>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {[
+              { icon: '🔐', label: 'AES-256 encrypted database' },
+              { icon: '🚫', label: 'No cloud, no accounts, no telemetry' },
+              { icon: '📁', label: 'You choose where the file lives' },
+              { icon: '🔓', label: 'Open source — inspect every line' },
+            ].map(({ icon, label }) => (
+              <div key={label} style={{
+                display: 'flex', alignItems: 'center', gap: 14,
+                padding: '14px 18px', borderRadius: 12,
+                background: 'var(--bg2)', border: '1px solid var(--border)'
+              }}>
+                <span style={{ fontSize: 20 }}>{icon}</span>
+                <span style={{ fontSize: 14, color: 'var(--text2)' }}>{label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="divider" />
+
+      {/* ── Download ── */}
+      <div id="download" className="section">
+        <DownloadSection />
+      </div>
+
+      {/* ── Footer ── */}
+      <footer>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{
+            width: 22, height: 22, borderRadius: 6,
+            background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center'
+          }}>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+          </div>
+          <span>MeterSync</span>
+          <span style={{ color: 'var(--text3)' }}>·</span>
+          <span style={{ color: 'var(--text3)' }}>MIT License</span>
+        </div>
+        <span style={{ color: 'var(--text3)' }}>Made with care · 2026</span>
+        <a href="https://github.com/" target="_blank" rel="noopener"
+          style={{ color: 'var(--text3)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 7, transition: 'color 0.2s' }}
+          onMouseEnter={e => e.currentTarget.style.color = 'var(--text)'}
+          onMouseLeave={e => e.currentTarget.style.color = 'var(--text3)'}
+        >
+          <IconGitHub />
+          github.com/metersync
+        </a>
+      </footer>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

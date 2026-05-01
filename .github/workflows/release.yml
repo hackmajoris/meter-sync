@@ -1,0 +1,141 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  # Create the GitHub release
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Create Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create ${{ github.ref_name }} \
+            --title "${{ github.ref_name }}" \
+            --generate-notes
+
+  # Builds macOS Electron DMG (Apple Silicon)
+  electron-mac:
+    needs: create-release
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+      - name: Set version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+      - name: Build frontend
+        run: cd web && npm ci && npm run build
+      - name: Build Go binary
+        run: |
+          mkdir -p electron/bin
+          go build -ldflags="-s -w" -o electron/bin/server ./cmd/server
+          codesign --sign - --force electron/bin/server
+      - name: Build Electron TypeScript
+        working-directory: electron
+        run: npm ci && npm run build
+      - name: Build Electron app (dir)
+        working-directory: electron
+        run: npx electron-builder --mac dir --publish never --em.version=${{ env.VERSION }}
+      - name: Deep-sign app bundle
+        run: |
+          APP=$(find electron/release -name "*.app" -maxdepth 3 | head -1)
+          codesign --deep --force --sign - "$APP"
+      - name: Package DMG
+        working-directory: electron
+        run: |
+          APP=$(find release -name "*.app" -maxdepth 3 | head -1)
+          npx electron-builder --mac dmg --prepackaged "$APP" --publish never --em.version=${{ env.VERSION }}
+      - name: Upload DMG to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          DMG=$(find electron/release -name "*.dmg" | head -1)
+          gh release upload ${{ github.ref_name }} "$DMG"
+
+  # Builds Windows Electron NSIS installer (x64)
+  electron-win:
+    needs: create-release
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+      - name: Set version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+      - name: Build frontend
+        run: cd web && npm ci && npm run build
+      - name: Build Go binary
+        run: |
+          mkdir -p electron/bin
+          go build -ldflags="-s -w" -o electron/bin/server.exe ./cmd/server
+      - name: Build Electron TypeScript
+        working-directory: electron
+        run: npm ci && npm run build
+      - name: Build Electron Windows installer
+        working-directory: electron
+        run: npx electron-builder --win nsis --publish never --em.version=${{ env.VERSION }}
+      - name: Upload installer to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          EXE=$(find electron/release -name "*.exe" | head -1)
+          gh release upload ${{ github.ref_name }} "$EXE"
+
+  # Builds Linux Electron AppImage (x64)
+  electron-linux:
+    needs: create-release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+      - name: Set version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+      - name: Install CGO dependencies
+        run: sudo apt-get update && sudo apt-get install -y libssl-dev
+      - name: Build frontend
+        run: cd web && npm ci && npm run build
+      - name: Build Go binary
+        env:
+          CGO_ENABLED: "1"
+        run: |
+          mkdir -p electron/bin
+          go build -ldflags="-s -w" -o electron/bin/server ./cmd/server
+      - name: Build Electron TypeScript
+        working-directory: electron
+        run: npm ci && npm run build
+      - name: Build Electron AppImage
+        working-directory: electron
+        run: npx electron-builder --linux AppImage --publish never --em.version=${{ env.VERSION }}
+      - name: Upload AppImage to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          APPIMAGE=$(find electron/release -name "*.AppImage" | head -1)
+          gh release upload ${{ github.ref_name }} "$APPIMAGE"

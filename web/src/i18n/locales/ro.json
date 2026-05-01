@@ -1,0 +1,99 @@
+{
+  "app": {
+    "title": "MeterSync"
+  },
+  "counter": {
+    "new": "Contor Nou",
+    "add": "Adaugă Contor",
+    "delete_confirm": "Șterge \"{{name}}\" și toate datele sale?",
+    "no_counters": "Niciun contor încă"
+  },
+  "house": {
+    "new": "Casă Nouă",
+    "add": "Adaugă Casă",
+    "no_houses": "Nicio casă încă",
+    "no_houses_sub": "Adaugă prima casă pentru a începe urmărirea",
+    "no_counters_sub": "Adaugă primul contor pentru a începe urmărirea"
+  },
+  "entry": {
+    "add": "Adaugă Înregistrare",
+    "save": "Salvează Înregistrarea",
+    "no_data": "Nicio dată încă — adaugă prima înregistrare mai sus"
+  },
+  "fields": {
+    "name": "Nume",
+    "unit": "Unitate",
+    "color": "Culoare",
+    "date": "Dată",
+    "value": "Valoare",
+    "note": "Notă",
+    "house": "Casă"
+  },
+  "placeholders": {
+    "counter_name": "ex. Electricitate",
+    "unit": "ex. kWh, m³, L",
+    "house_name": "ex. Casa Principală, Cabană",
+    "value": "0.00",
+    "note": "Orice observații…"
+  },
+  "stats": {
+    "today_vs_yesterday": "Astăzi vs Ieri",
+    "average": "Medie / zi",
+    "total": "Total",
+    "peak": "Vârf",
+    "lowest": "Minim"
+  },
+  "chart": {
+    "line": "Linie",
+    "bar": "Bare",
+    "daily": "Zilnic",
+    "monthly": "Lunar",
+    "expand": "Extinde",
+    "close": "Închide",
+    "usage_over_time": "Consum în timp",
+    "full_history": "Istoric complet",
+    "last_entries": "Ultimele {{count}} înregistrări",
+    "avg_line": "Linie medie",
+    "trend": "Tendință",
+    "average": "Medie"
+  },
+  "settings": {
+    "title": "Setări",
+    "subtitle": "Importă date CSV pentru contoare",
+    "back": "Înapoi",
+    "import": "Importă CSV",
+    "export": "Exportă CSV",
+    "csv_format": "Format CSV",
+    "download_template": "Descarcă șablon",
+    "format_description": "Format așteptat cu rând antet:",
+    "format_notes": "• <strong>date</strong>: format AAAA-LL-ZZ<br/>• <strong>value</strong>: Număr (suportă zecimale)<br/>• <strong>note</strong>: Observații opționale (poate fi gol)",
+    "entries_count": "{{count}} înregistrări",
+    "import_success": "✓ {{count}} înregistrări adăugate",
+    "import_error": "Nicio înregistrare validă găsită",
+    "language": "Limbă",
+    "language_subtitle": "Alege limba preferată",
+    "database": "Baza de date",
+    "database_subtitle": "Setări de criptare și locație fișier",
+    "db_location": "Locație",
+    "db_password": "Parolă criptare",
+    "db_change_password": "Schimbă parola",
+    "db_new_password": "Parolă nouă",
+    "db_confirm_password": "Confirmă parola nouă",
+    "db_set_password": "Setează parola nouă",
+    "db_password_warning": "Dacă pierzi această parolă, datele tale vor fi permanent inaccesibile. Salvează-o într-un manager de parole.",
+    "db_reset": "Deconectare",
+    "db_reset_desc": "Șterge calea și parola salvate. Fișierul bazei de date nu este șters.",
+    "db_reset_btn": "Deconectare…",
+    "db_confirm_reset": "Da, deconectează",
+    "cancel": "Anulează"
+  },
+  "entries": {
+    "title": "Înregistrări Zilnice",
+    "records": "{{count}} înregistrări",
+    "optional": "(opțional)"
+  },
+  "actions": {
+    "cancel": "Anulează",
+    "delete": "Șterge"
+  }
+}

@@ -1,0 +1,99 @@
+{
+  "app": {
+    "title": "MeterSync"
+  },
+  "counter": {
+    "new": "New Counter",
+    "add": "Add Counter",
+    "delete_confirm": "Delete \"{{name}}\" and all its data?",
+    "no_counters": "No counters yet"
+  },
+  "house": {
+    "new": "New House",
+    "add": "Add House",
+    "no_houses": "No home yet",
+    "no_houses_sub": "Add your first home to start tracking",
+    "no_counters_sub": "Add your first counter to start tracking"
+  },
+  "entry": {
+    "add": "Add Entry",
+    "save": "Save Entry",
+    "no_data": "No data yet — add your first entry above"
+  },
+  "fields": {
+    "name": "Name",
+    "unit": "Unit",
+    "color": "Color",
+    "date": "Date",
+    "value": "Value",
+    "note": "Note",
+    "house": "House"
+  },
+  "placeholders": {
+    "counter_name": "e.g. Electricity",
+    "unit": "e.g. kWh, m³, L",
+    "house_name": "e.g. Main House, Vacation Home",
+    "value": "0.00",
+    "note": "Any remarks…"
+  },
+  "stats": {
+    "today_vs_yesterday": "Today vs Yesterday",
+    "average": "Average / day",
+    "total": "Total",
+    "peak": "Peak",
+    "lowest": "Lowest"
+  },
+  "chart": {
+    "line": "Line",
+    "bar": "Bar",
+    "daily": "Daily",
+    "monthly": "Monthly",
+    "expand": "Expand",
+    "close": "Close",
+    "usage_over_time": "Usage over time",
+    "full_history": "Full history",
+    "last_entries": "Last {{count}} entries",
+    "avg_line": "Avg line",
+    "trend": "Trend",
+    "average": "Average"
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Import CSV data for counters",
+    "back": "Back",
+    "import": "Import CSV",
+    "export": "Export CSV",
+    "csv_format": "CSV Format",
+    "download_template": "Download template",
+    "format_description": "Expected format with header row:",
+    "format_notes": "• <strong>date</strong>: YYYY-MM-DD format<br/>• <strong>value</strong>: Number (supports decimals)<br/>• <strong>note</strong>: Optional remarks (can be empty)",
+    "entries_count": "{{count}} entries",
+    "import_success": "✓ {{count}} entries added",
+    "import_error": "No valid entries found",
+    "language": "Language",
+    "language_subtitle": "Choose your preferred language",
+    "database": "Database",
+    "database_subtitle": "Encryption and file location settings",
+    "db_location": "Location",
+    "db_password": "Encryption password",
+    "db_change_password": "Change password",
+    "db_new_password": "New password",
+    "db_confirm_password": "Confirm new password",
+    "db_set_password": "Set new password",
+    "db_password_warning": "If you lose this password your data will be permanently inaccessible. Store it in a password manager.",
+    "db_reset": "Disconnect",
+    "db_reset_desc": "Clears the saved path and password. The database file itself is not deleted.",
+    "db_reset_btn": "Disconnect…",
+    "db_confirm_reset": "Yes, disconnect",
+    "cancel": "Cancel"
+  },
+  "entries": {
+    "title": "Daily Entries",
+    "records": "{{count}} records",
+    "optional": "(optional)"
+  },
+  "actions": {
+    "cancel": "Cancel",
+    "delete": "Delete"
+  }
+}
