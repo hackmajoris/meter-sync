@@ -1,56 +1,86 @@
-# counters
+# MeterSync
 
-> Short description of the project.
+Track utility meter readings across multiple properties. Log readings for water, gas, electricity, or any other counter per house, and view usage stats over time.
+
+Built as a Go + React SPA with an optional Electron desktop wrapper and an encrypted SQLite database.
 
 ## Prerequisites
 
-- Go 1.22+
+- Go 1.25+
 - Node 20+
+- GCC / CGO toolchain (required for SQLite with encryption)
 - [golangci-lint](https://golangci-lint.run/)
+
+## Stack
+
+| Layer    | Tech                                              |
+|----------|---------------------------------------------------|
+| Backend  | Go, `net/http`, `go-sqlcipher` (SQLite + AES-256) |
+| Frontend | React 19, Vite, Chart.js, i18next                 |
+| Desktop  | Electron 33 (wraps the Go binary)                 |
+
+## Project structure
+
+```
+cmd/
+  server/       — HTTP server entry point
+  seed/         — seed script for development data
+pkg/
+  api/          — REST handlers (houses, counters, entries, stats)
+  store/        — SQLite data layer
+  web/          — embeds web/dist and serves the SPA
+web/            — React frontend (outputs to web/dist/)
+electron/       — Electron shell; spawns .bin/server
+```
 
 ## Development
 
 ```bash
-make build            # build everything
-make test             # run tests
-make lint             # run linter
-make web-dev          # frontend dev server
-make electron-dev     # run Electron in dev mode
-make electron-build   # package Electron app
+make dev              # start Go server + Vite dev server in parallel
+make web-dev          # Vite dev server only
+make electron-dev     # build everything and open Electron (dev mode)
 ```
+
+## Build
+
+```bash
+make build            # web-build + server-build → .bin/server
+make electron-build   # package the Electron app
+```
+
+## Other targets
+
+```bash
+make test             # go test -race -cover ./...
+make lint             # golangci-lint run ./...
+make fmt              # gofmt + goimports
+make generate         # go generate ./...
+make clean            # remove .bin/, pkg/web/dist/, electron/dist/
+```
+
+## Seeding
+
+```bash
+make seed                            # seed the local dev database
+make seed-electron                   # seed the Electron app's database
+make seed-electron KEY=your-key      # seed an encrypted Electron database
+make seed-electron DB=/path/data.db  # seed a custom database path
+```
+
+The Electron database location is resolved automatically per platform:
+
+| OS      | Default path                                     |
+|---------|--------------------------------------------------|
+| macOS   | `~/Library/Application Support/counters/data.db` |
+| Linux   | `~/.config/counters/data.db`                     |
+| Windows | `%APPDATA%\counters\data.db`                     |
+
+If `config.json` in that directory specifies a `dbPath`, that value is used instead.
+
+## Database encryption
+
+The SQLite database is encrypted with AES-256 via `go-sqlcipher`. Pass the encryption key through the `DB_KEY` environment variable when running the server or seed commands.
 
 ## License
 
 MIT
-
-
-What changed
-
-Go (pkg/store/store.go)
-- Swapped modernc.org/sqlite (pure-Go) for github.com/mutecomm/go-sqlcipher/v4 (CGO, AES-256 encryption)
-- Added buildDSN(path, key) — returns a plain path when key is empty (no encryption), or a file:...?_pragma_key=... DSN when a key is set
-- Replaced the flat initDB() with a setupConn() (runs per-connection pragmas: WAL, foreign keys, busy timeout) and a versioned migrate() using PRAGMA user_version as the schema version   
-  counter — add new SQL blocks to the migrations slice as the schema evolves, never editing existing entries
-
-Go (cmd/server/main.go)
-- Reads DB_PATH, DB_KEY, PORT env vars (Electron sets these); falls back to -db/-addr flags so the dev workflow and tests still work
-- Uses net.Listen + dynamic port (PORT=0) and prints Server running on http://localhost:PORT — parsed by Electron to know which port to load
-
-Electron (electron/src/main.ts)
-- On first launch (no config): loads the SPA index.html from disk as a fixed-size 520×640 non-resizable window — Go does not start yet
-- After setup: starts Go with DB_PATH, DB_KEY, PORT=0 env vars, parses the port from stdout, then navigates the window to the app
-- Config stored as {userData}/config.json; key encrypted via Electron's safeStorage and saved as {userData}/db.key.enc
-- IPC handlers: get-config, pick-db-folder, pick-db-file, complete-setup, change-key, reset-config
-
-Electron (electron/electron-builder.yml)
-- web/dist added as an extra resource so the SPA can be loadFile()'d for the setup screen before Go starts
-
-Web
-- App.tsx: checking → setup → ready state machine; renders <SetupView> when not configured
-- SetupView.tsx (new): two-mode onboarding — "New database" (choose folder + set password + confirm) or "Open existing" (pick .db file + enter password)
-- SettingsPage.tsx: Database section (Electron-only) — shows file path, change-password form, disconnect/reset button
-- Translations added in both en.json and ro.json
-
-Important note for dev workflow: CGO_ENABLED=1 is now required. The Makefile already sets it. If you run go build or go run manually, prefix with CGO_ENABLED=1. The existing data/data.db
-was created without encryption — running the server without DB_KEY will open it as before (unencrypted). Once you go through the Electron onboarding flow, it creates a new encrypted      
-database at the chosen path.       
