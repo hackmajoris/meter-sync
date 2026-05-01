@@ -6,18 +6,92 @@ on:
       - 'v*'
 
 jobs:
-  release:
-    runs-on: ubuntu-latest
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-13         # Intel runner — builds x64 dmg
+            goos: darwin
+            goarch: amd64
+            eb_arch: "--x64"
+          - os: macos-latest     # Apple Silicon runner — builds arm64 dmg
+            goos: darwin
+            goarch: arm64
+            eb_arch: "--arm64"
+          - os: windows-latest
+            goos: windows
+            goarch: amd64
+            eb_arch: "--x64"
+            bin_ext: ".exe"
+          - os: ubuntu-latest
+            goos: linux
+            goarch: amd64
+            eb_arch: "--x64"
+
+    runs-on: ${{ matrix.os }}
+
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-      - uses: goreleaser/goreleaser-action@v5
+
+      - uses: actions/setup-node@v4
         with:
-          version: latest
-          args: release --clean
+          node-version: 20
+
+      - name: Install Linux CGO deps
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get install -y libssl-dev
+
+      - name: Build web (outputs to pkg/web/dist, embedded into Go binary)
+        run: cd web && npm ci && npm run build
+
+      - name: Build Go server
+        shell: bash
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CGO_ENABLED: "1"
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          mkdir -p .bin
+          go build -tags release -ldflags="-s -w" -o .bin/server${{ matrix.bin_ext }} ./cmd/server
+
+      - name: Build Electron app
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: cd electron && npm ci && npx electron-builder ${{ matrix.eb_arch }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: counters-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: |
+            electron/dist/*.dmg
+            electron/dist/*.exe
+            electron/dist/*.AppImage
+          if-no-files-found: warn
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**
+          generate_release_notes: true
