@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -130,6 +131,7 @@ function polyfit(ys, degree) {
 }
 
 function MeterChart({ counter, chartType, expanded, groupBy = 'day', showAvg = false, showTrend = false }) {
+  const { t } = useTranslation()
   const chartRef = useRef(null)
   const sortedEntries = useMemo(() => [...counter.entries].sort((a,b) => a.date.localeCompare(b.date)), [counter.entries])
 
@@ -174,7 +176,7 @@ function MeterChart({ counter, chartType, expanded, groupBy = 'day', showAvg = f
 
   const overlayDatasets = []
   if (avgValues) overlayDatasets.push({
-    label: 'Average',
+    label: t('chart.average'),
     data: avgValues,
     borderColor: '#a78bfa',
     borderWidth: 1.5,
@@ -186,7 +188,7 @@ function MeterChart({ counter, chartType, expanded, groupBy = 'day', showAvg = f
     order: 0,
   })
   if (trendValues) overlayDatasets.push({
-    label: 'Trend',
+    label: t('chart.trend'),
     data: trendValues,
     borderColor: '#f59e0b',
     borderWidth: 2,
@@ -239,8 +241,8 @@ function MeterChart({ counter, chartType, expanded, groupBy = 'day', showAvg = f
   }
 
   const tooltipLabelCb = (ctx) => {
-    if (ctx.dataset.label === 'Average') return ` Avg: ${ctx.parsed.y} ${counter.unit}`
-    if (ctx.dataset.label === 'Trend') return ` Trend: ${ctx.parsed.y} ${counter.unit}`
+    if (ctx.dataset.label === t('chart.average')) return ` ${t('chart.average')}: ${ctx.parsed.y} ${counter.unit}`
+    if (ctx.dataset.label === t('chart.trend')) return ` ${t('chart.trend')}: ${ctx.parsed.y} ${counter.unit}`
     return ` ${ctx.parsed.y} ${counter.unit}`
   }
 
@@ -281,27 +283,79 @@ function MeterChart({ counter, chartType, expanded, groupBy = 'day', showAvg = f
   return <Line ref={chartRef} data={lineData} options={options} style={{ width: '100%', height: '100%' }} />
 }
 
+function LanguageSwitcher() {
+  const { i18n } = useTranslation()
+  
+  const changeLanguage = (lng) => {
+    i18n.changeLanguage(lng)
+    localStorage.setItem('language', lng)
+  }
+
+  return (
+    <div style={{ display: 'flex', gap: 4, background: 'var(--bg4)', borderRadius: 8, padding: 4 }}>
+      {[
+        { code: 'en', label: 'EN', flag: '🇬🇧' },
+        { code: 'ro', label: 'RO', flag: '🇷🇴' }
+      ].map(({ code, label, flag }) => (
+        <button
+          key={code}
+          onClick={() => changeLanguage(code)}
+          style={{
+            background: i18n.language === code ? 'var(--bg3)' : 'transparent',
+            border: i18n.language === code ? '1px solid var(--border2)' : '1px solid transparent',
+            borderRadius: 6,
+            padding: '6px 10px',
+            color: i18n.language === code ? 'var(--text)' : 'var(--text2)',
+            cursor: 'pointer',
+            fontFamily: 'DM Sans',
+            fontSize: 12,
+            fontWeight: 500,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+            transition: 'all 0.15s'
+          }}
+          onMouseEnter={e => { 
+            if (i18n.language !== code) {
+              e.currentTarget.style.background = 'var(--bg3)22'
+            }
+          }}
+          onMouseLeave={e => { 
+            if (i18n.language !== code) {
+              e.currentTarget.style.background = 'transparent'
+            }
+          }}
+        >
+          <span>{flag}</span>
+          <span>{label}</span>
+        </button>
+      ))}
+    </div>
+  )
+}
+
 function ChartTypeToggle({ type, onToggle, color }) {
+  const { t } = useTranslation()
   return (
     <div style={{ display: 'flex', gap: 4, background: 'var(--bg4)', borderRadius: 10, padding: 4 }}>
-      {['line', 'bar'].map(t => (
-        <button key={t} onClick={() => onToggle(t)} style={{
-          background: type === t ? color + '33' : 'transparent',
-          border: type === t ? `1px solid ${color}55` : '1px solid transparent',
+      {['line', 'bar'].map(chartType => (
+        <button key={chartType} onClick={() => onToggle(chartType)} style={{
+          background: type === chartType ? color + '33' : 'transparent',
+          border: type === chartType ? `1px solid ${color}55` : '1px solid transparent',
           borderRadius: 7, padding: '5px 12px',
-          color: type === t ? color : 'var(--text2)',
+          color: type === chartType ? color : 'var(--text2)',
           cursor: 'pointer', fontFamily: 'DM Sans', fontSize: 12, fontWeight: 500,
           transition: 'all 0.15s'
         }}>
-          {t === 'line' ? (
+          {chartType === 'line' ? (
             <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-              Line
+              {t('chart.line')}
             </span>
           ) : (
             <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><rect x="18" y="3" width="4" height="18"/><rect x="10" y="8" width="4" height="13"/><rect x="2" y="13" width="4" height="8"/></svg>
-              Bar
+              {t('chart.bar')}
             </span>
           )}
         </button>
@@ -311,9 +365,10 @@ function ChartTypeToggle({ type, onToggle, color }) {
 }
 
 function GroupByToggle({ groupBy, onToggle, color }) {
+  const { t } = useTranslation()
   return (
     <div style={{ display: 'flex', gap: 4, background: 'var(--bg4)', borderRadius: 10, padding: 4 }}>
-      {[{ value: 'day', label: 'Daily' }, { value: 'month', label: 'Monthly' }].map(({ value, label }) => (
+      {[{ value: 'day', label: t('chart.daily') }, { value: 'month', label: t('chart.monthly') }].map(({ value, label }) => (
         <button key={value} onClick={() => onToggle(value)} style={{
           background: groupBy === value ? color + '33' : 'transparent',
           border: groupBy === value ? `1px solid ${color}55` : '1px solid transparent',
@@ -330,6 +385,7 @@ function GroupByToggle({ groupBy, onToggle, color }) {
 }
 
 function OverlayToggles({ showAvg, showTrend, onToggleAvg, onToggleTrend }) {
+  const { t } = useTranslation()
   const item = (checked, onToggle, dotColor, label) => (
     <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', userSelect: 'none' }}>
       <div
@@ -349,8 +405,8 @@ function OverlayToggles({ showAvg, showTrend, onToggleAvg, onToggleTrend }) {
   )
   return (
     <div style={{ display: 'flex', gap: 14, alignItems: 'center', padding: '0 2px' }}>
-      {item(showAvg, onToggleAvg, '#a78bfa', 'Avg line')}
-      {item(showTrend, onToggleTrend, '#f59e0b', 'Trend')}
+      {item(showAvg, onToggleAvg, '#a78bfa', t('chart.avg_line'))}
+      {item(showTrend, onToggleTrend, '#f59e0b', t('chart.trend'))}
     </div>
   )
 }
@@ -372,6 +428,7 @@ function StatCard({ label, value, unit, color, percent }) {
 }
 
 function AddCounterModal({ onClose, onAdd, houses, defaultHouseId }) {
+  const { t } = useTranslation()
   const [name, setName] = useState('')
   const [unit, setUnit] = useState('kWh')
   const [color, setColor] = useState(PALETTE[0])
@@ -386,25 +443,25 @@ function AddCounterModal({ onClose, onAdd, houses, defaultHouseId }) {
   return (
     <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal">
-        <h2>New Counter</h2>
+        <h2>{t('counter.new')}</h2>
         <div className="modal-field">
-          <label>Name</label>
-          <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Electricity" autoFocus onKeyDown={e => e.key === 'Enter' && handleSubmit()} />
+          <label>{t('fields.name')}</label>
+          <input value={name} onChange={e => setName(e.target.value)} placeholder={t('placeholders.counter_name')} autoFocus onKeyDown={e => e.key === 'Enter' && handleSubmit()} />
         </div>
         <div className="modal-field">
-          <label>Unit</label>
-          <input value={unit} onChange={e => setUnit(e.target.value)} placeholder="e.g. kWh, m³, L" />
+          <label>{t('fields.unit')}</label>
+          <input value={unit} onChange={e => setUnit(e.target.value)} placeholder={t('placeholders.unit')} />
         </div>
         {houses.length > 1 && (
           <div className="modal-field">
-            <label>House</label>
+            <label>{t('fields.house')}</label>
             <select value={houseId} onChange={e => setHouseId(e.target.value)}>
               {houses.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
             </select>
           </div>
         )}
         <div className="modal-field">
-          <label>Color</label>
+          <label>{t('fields.color')}</label>
           <div className="color-grid">
             {PALETTE.map(c => (
               <div key={c} className={`color-swatch${c === color ? ' selected' : ''}`} style={{ background: c }} onClick={() => setColor(c)} />
@@ -412,8 +469,8 @@ function AddCounterModal({ onClose, onAdd, houses, defaultHouseId }) {
           </div>
         </div>
         <div className="modal-actions">
-          <button className="btn-ghost" onClick={onClose}>Cancel</button>
-          <button className="btn-primary" style={{ '--accent': color }} onClick={handleSubmit}>Add Counter</button>
+          <button className="btn-ghost" onClick={onClose}>{t('actions.cancel')}</button>
+          <button className="btn-primary" style={{ '--accent': color }} onClick={handleSubmit}>{t('counter.add')}</button>
         </div>
       </div>
     </div>
@@ -421,6 +478,7 @@ function AddCounterModal({ onClose, onAdd, houses, defaultHouseId }) {
 }
 
 function AddHouseModal({ onClose, onAdd }) {
+  const { t } = useTranslation()
   const [name, setName] = useState('')
 
   const handleSubmit = () => {
@@ -432,14 +490,14 @@ function AddHouseModal({ onClose, onAdd }) {
   return (
     <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal">
-        <h2>New House</h2>
+        <h2>{t('house.new')}</h2>
         <div className="modal-field">
-          <label>Name</label>
-          <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Main House, Vacation Home" autoFocus onKeyDown={e => e.key === 'Enter' && handleSubmit()} />
+          <label>{t('fields.name')}</label>
+          <input value={name} onChange={e => setName(e.target.value)} placeholder={t('placeholders.house_name')} autoFocus onKeyDown={e => e.key === 'Enter' && handleSubmit()} />
         </div>
         <div className="modal-actions">
-          <button className="btn-ghost" onClick={onClose}>Cancel</button>
-          <button className="btn-primary" onClick={handleSubmit}>Add House</button>
+          <button className="btn-ghost" onClick={onClose}>{t('actions.cancel')}</button>
+          <button className="btn-primary" onClick={handleSubmit}>{t('house.add')}</button>
         </div>
       </div>
     </div>
@@ -447,6 +505,7 @@ function AddHouseModal({ onClose, onAdd }) {
 }
 
 function AddEntryModal({ counter, onClose, onAdd }) {
+  const { t } = useTranslation()
   const today = new Date().toISOString().split('T')[0]
   const [date, setDate] = useState(today)
   const [value, setValue] = useState('')
@@ -462,22 +521,22 @@ function AddEntryModal({ counter, onClose, onAdd }) {
   return (
     <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal">
-        <h2>Add Entry</h2>
+        <h2>{t('entry.add')}</h2>
         <div className="modal-field">
-          <label>Date</label>
+          <label>{t('fields.date')}</label>
           <input type="date" value={date} onChange={e => setDate(e.target.value)} />
         </div>
         <div className="modal-field">
-          <label>Value ({counter.unit})</label>
-          <input type="number" value={value} onChange={e => setValue(e.target.value)} placeholder="0.00" step="0.01" autoFocus onKeyDown={e => e.key === 'Enter' && handleSubmit()} />
+          <label>{t('fields.value')} ({counter.unit})</label>
+          <input type="number" value={value} onChange={e => setValue(e.target.value)} placeholder={t('placeholders.value')} step="0.01" autoFocus onKeyDown={e => e.key === 'Enter' && handleSubmit()} />
         </div>
         <div className="modal-field">
-          <label>Note (optional)</label>
-          <input value={note} onChange={e => setNote(e.target.value)} placeholder="Any remarks…" />
+          <label>{t('fields.note')} {t('entries.optional')}</label>
+          <input value={note} onChange={e => setNote(e.target.value)} placeholder={t('placeholders.note')} />
         </div>
         <div className="modal-actions">
-          <button className="btn-ghost" onClick={onClose}>Cancel</button>
-          <button className="btn-primary" style={{ '--accent': counter.color }} onClick={handleSubmit}>Save Entry</button>
+          <button className="btn-ghost" onClick={onClose}>{t('actions.cancel')}</button>
+          <button className="btn-primary" style={{ '--accent': counter.color }} onClick={handleSubmit}>{t('entry.save')}</button>
         </div>
       </div>
     </div>
@@ -485,13 +544,14 @@ function AddEntryModal({ counter, onClose, onAdd }) {
 }
 
 function ExpandedChart({ counter, chartType, onClose, onToggleType, groupBy, onToggleGroupBy, showAvg, showTrend, onToggleAvg, onToggleTrend }) {
+  const { t } = useTranslation()
   return (
     <div className="chart-expanded-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="chart-expanded-inner">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <div>
             <div style={{ fontFamily: 'Outfit', fontSize: 22, fontWeight: 600 }}>{counter.name}</div>
-            <div style={{ color: 'var(--text2)', fontSize: 13, marginTop: 2 }}>Full history</div>
+            <div style={{ color: 'var(--text2)', fontSize: 13, marginTop: 2 }}>{t('chart.full_history')}</div>
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
             <GroupByToggle groupBy={groupBy} onToggle={onToggleGroupBy} color={counter.color} />
@@ -502,7 +562,7 @@ function ExpandedChart({ counter, chartType, onClose, onToggleType, groupBy, onT
               display: 'flex', alignItems: 'center', gap: 6
             }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-              Close
+              {t('chart.close')}
             </button>
           </div>
         </div>
@@ -528,6 +588,7 @@ function downloadFile(filename, content, mime = 'text/csv') {
 }
 
 function SettingsPage({ counters, onImport, onBack }) {
+  const { t } = useTranslation()
   const [importFeedback, setImportFeedback] = useState({})
   const fileInputRef = useRef(null)
   const currentCounterRef = useRef(null)
@@ -559,7 +620,7 @@ function SettingsPage({ counters, onImport, onBack }) {
       if (typeof text === 'string') {
         const entries = parseCSV(text)
         if (entries.length === 0) {
-          setImportFeedback(prev => ({ ...prev, [currentCounterRef.current]: 'No valid entries found' }))
+          setImportFeedback(prev => ({ ...prev, [currentCounterRef.current]: t('settings.import_error') }))
           setTimeout(() => setImportFeedback(prev => {
             const updated = { ...prev }
             delete updated[currentCounterRef.current]
@@ -568,7 +629,7 @@ function SettingsPage({ counters, onImport, onBack }) {
           return
         }
         onImport(currentCounterRef.current, entries)
-        setImportFeedback(prev => ({ ...prev, [currentCounterRef.current]: `✓ ${entries.length} entries added` }))
+        setImportFeedback(prev => ({ ...prev, [currentCounterRef.current]: t('settings.import_success', { count: entries.length }) }))
         setTimeout(() => setImportFeedback(prev => {
           const updated = { ...prev }
           delete updated[currentCounterRef.current]
@@ -588,8 +649,8 @@ function SettingsPage({ counters, onImport, onBack }) {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16
       }}>
         <div>
-          <div style={{ fontFamily: 'Outfit', fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em' }}>Settings</div>
-          <div style={{ color: 'var(--text3)', fontSize: 12, marginTop: 1 }}>Import CSV data for counters</div>
+          <div style={{ fontFamily: 'Outfit', fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em' }}>{t('settings.title')}</div>
+          <div style={{ color: 'var(--text3)', fontSize: 12, marginTop: 1 }}>{t('settings.subtitle')}</div>
         </div>
         <button
           onClick={onBack}
@@ -602,11 +663,21 @@ function SettingsPage({ counters, onImport, onBack }) {
           onMouseLeave={e => e.currentTarget.style.color = 'var(--text2)'}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          Back
+          {t('settings.back')}
         </button>
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '20px 28px' }}>
+        <div style={{ marginBottom: 32, padding: '16px 20px', background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <div>
+              <div style={{ fontFamily: 'Outfit', fontSize: 14, fontWeight: 600 }}>{t('settings.language')}</div>
+              <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>{t('settings.language_subtitle')}</div>
+            </div>
+          </div>
+          <LanguageSwitcher />
+        </div>
+
         <div style={{ display: 'grid', gap: 12 }}>
           {counters.map(counter => (
             <div
@@ -635,7 +706,7 @@ function SettingsPage({ counters, onImport, onBack }) {
                     {counter.name}
                   </div>
                   <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>
-                    {counter.entries.length} entries • {counter.unit}
+                    {t('settings.entries_count', { count: counter.entries.length })} • {counter.unit}
                   </div>
                 </div>
               </div>
@@ -663,7 +734,7 @@ function SettingsPage({ counters, onImport, onBack }) {
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
                   </svg>
-                  Export CSV
+                  {t('settings.export')}
                 </button>
                 <button
                   onClick={() => handleImportClick(counter.id)}
@@ -694,7 +765,7 @@ function SettingsPage({ counters, onImport, onBack }) {
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
                   </svg>
-                  Import CSV
+                  {t('settings.import')}
                 </button>
               </div>
             </div>
@@ -703,7 +774,7 @@ function SettingsPage({ counters, onImport, onBack }) {
 
         <div style={{ marginTop: 32, padding: '16px 20px', background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-            <div style={{ fontFamily: 'Outfit', fontSize: 14, fontWeight: 600 }}>CSV Format</div>
+            <div style={{ fontFamily: 'Outfit', fontSize: 14, fontWeight: 600 }}>{t('settings.csv_format')}</div>
             <button
               onClick={handleDownloadTemplate}
               style={{
@@ -719,15 +790,15 @@ function SettingsPage({ counters, onImport, onBack }) {
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
               </svg>
-              Download template
+              {t('settings.download_template')}
             </button>
           </div>
           <div style={{ fontSize: 12, color: 'var(--text3)', lineHeight: 1.6 }}>
-            <p style={{ margin: '0 0 8px 0' }}>Expected format with header row:</p>
+            <p style={{ margin: '0 0 8px 0' }}>{t('settings.format_description')}</p>
             <code style={{ display: 'block', background: 'var(--bg3)', padding: '8px 12px', borderRadius: 6, overflow: 'auto', fontSize: 11 }}>
               date,value,note<br/>2024-01-15,14.5,Meter read<br/>2024-01-16,12.3,<br/>2024-01-17,15.8,High usage
             </code>
-            <p style={{ margin: '8px 0 0 0' }}>• <strong>date</strong>: YYYY-MM-DD format<br/>• <strong>value</strong>: Number (supports decimals)<br/>• <strong>note</strong>: Optional remarks (can be empty)</p>
+            <p style={{ margin: '8px 0 0 0' }} dangerouslySetInnerHTML={{ __html: t('settings.format_notes') }} />
           </div>
         </div>
       </div>
@@ -744,6 +815,7 @@ function SettingsPage({ counters, onImport, onBack }) {
 }
 
 export default function App() {
+  const { t } = useTranslation()
   const [houses, setHouses] = useState(INITIAL_HOUSES)
   const [counters, setCounters] = useState(INITIAL_COUNTERS)
   const [selectedId, setSelectedId] = useState(INITIAL_COUNTERS[0].id)
@@ -888,7 +960,7 @@ export default function App() {
                 <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
               </svg>
             </div>
-            MeterSync
+            {t('app.title')}
           </div>
         </div>
 
@@ -922,7 +994,7 @@ export default function App() {
                   </button>
                 </div>
                 {houseCounters.length === 0 && (
-                  <div style={{ paddingLeft: 8, fontSize: 11, color: 'var(--text3)', fontStyle: 'italic' }}>No counters yet</div>
+                  <div style={{ paddingLeft: 8, fontSize: 11, color: 'var(--text3)', fontStyle: 'italic' }}>{t('counter.no_counters')}</div>
                 )}
                 {houseCounters.map(c => (
                   <div
@@ -978,7 +1050,7 @@ export default function App() {
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
             </svg>
-            Add House
+            {t('house.add')}
           </button>
           <button
             onClick={() => { setView('settings'); if (isMobile) setSidebarOpen(false) }}
@@ -996,7 +1068,7 @@ export default function App() {
             onMouseLeave={e => { e.currentTarget.style.background = view === 'settings' ? 'var(--bg4)' : 'var(--bg3)'; e.currentTarget.style.color = view === 'settings' ? 'var(--text)' : 'var(--text2)' }}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="1"/><path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m5.08 0l4.24-4.24M1 12h6m6 0h6M4.22 19.78l4.24-4.24m5.08 0l4.24 4.24"/></svg>
-            Settings
+            {t('settings.title')}
           </button>
         </div>
       </aside>
@@ -1035,7 +1107,7 @@ export default function App() {
               </div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <button
-                  onClick={() => { if (window.confirm(`Delete "${counter.name}" and all its data?`)) deleteCounter(counter.id) }}
+                  onClick={() => { if (window.confirm(t('counter.delete_confirm', { name: counter.name }))) deleteCounter(counter.id) }}
                   style={{ background: 'transparent', border: 'none', padding: '7px 10px', borderRadius: 9, cursor: 'pointer', color: 'var(--text3)', transition: 'color 0.15s' }}
                   onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
                   onMouseLeave={e => e.currentTarget.style.color = 'var(--text3)'}
@@ -1056,7 +1128,7 @@ export default function App() {
                   onMouseLeave={e => e.currentTarget.style.opacity = '1'}
                 >
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                  Add Entry
+                  {t('entry.add')}
                 </button>
               </div>
             </div>
@@ -1065,20 +1137,20 @@ export default function App() {
               {stats && (
                 <div className="stats-row" style={{ display: 'flex', gap: 10, marginBottom: 16, overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', paddingBottom: 2 }}>
                   {stats.diff !== null && (
-                    <StatCard label="Today vs Yesterday" value={stats.diff} unit={counter.unit} color={counter.color} percent={stats.diffPercent} />
+                    <StatCard label={t('stats.today_vs_yesterday')} value={stats.diff} unit={counter.unit} color={counter.color} percent={stats.diffPercent} />
                   )}
-                  <StatCard label="Average / day" value={stats.avg} unit={counter.unit} color={counter.color} />
-                  <StatCard label="Total" value={stats.total} unit={counter.unit} color={counter.color} />
-                  <StatCard label="Peak" value={stats.max} unit={counter.unit} color={counter.color} />
-                  <StatCard label="Lowest" value={stats.min} unit={counter.unit} color={counter.color} />
+                  <StatCard label={t('stats.average')} value={stats.avg} unit={counter.unit} color={counter.color} />
+                  <StatCard label={t('stats.total')} value={stats.total} unit={counter.unit} color={counter.color} />
+                  <StatCard label={t('stats.peak')} value={stats.max} unit={counter.unit} color={counter.color} />
+                  <StatCard label={t('stats.lowest')} value={stats.min} unit={counter.unit} color={counter.color} />
                 </div>
               )}
 
               <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 18, padding: '20px 22px', marginBottom: 20 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                   <div>
-                    <div style={{ fontFamily: 'Outfit', fontSize: 15, fontWeight: 600 }}>Usage over time</div>
-                    <div style={{ color: 'var(--text3)', fontSize: 12, marginTop: 2 }}>Last {counter.entries.length} entries</div>
+                    <div style={{ fontFamily: 'Outfit', fontSize: 15, fontWeight: 600 }}>{t('chart.usage_over_time')}</div>
+                    <div style={{ color: 'var(--text3)', fontSize: 12, marginTop: 2 }}>{t('chart.last_entries', { count: counter.entries.length })}</div>
                   </div>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                     <GroupByToggle groupBy={groupBy} onToggle={setGroupBy} color={counter.color} />
@@ -1096,7 +1168,7 @@ export default function App() {
                       onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg4)'; e.currentTarget.style.color = 'var(--text2)' }}
                     >
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
-                      Expand
+                      {t('chart.expand')}
                     </button>
                   </div>
                 </div>
@@ -1106,65 +1178,67 @@ export default function App() {
                 <div style={{ height: 200 }}>
                   {counter.entries.length > 0
                     ? <MeterChart counter={counter} chartType={chartType} expanded={false} groupBy={groupBy} showAvg={showAvg} showTrend={showTrend} />
-                    : <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text3)', fontSize: 13 }}>No data yet — add your first entry above</div>
+                    : <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text3)', fontSize: 13 }}>{t('entry.no_data')}</div>
                   }
                 </div>
               </div>
 
-              <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 18, overflow: 'hidden' }}>
-                <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div style={{ fontFamily: 'Outfit', fontSize: 15, fontWeight: 600 }}>Daily Entries</div>
-                  <div style={{ fontSize: 12, color: 'var(--text3)' }}>{sortedEntries.length} records</div>
+              <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 18, overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: 500 }}>
+                <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+                  <div style={{ fontFamily: 'Outfit', fontSize: 15, fontWeight: 600 }}>{t('entries.title')}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text3)' }}>{t('entries.records', { count: sortedEntries.length })}</div>
                 </div>
                 {sortedEntries.length === 0 ? (
                   <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text3)', fontSize: 13 }}>
-                    No entries yet. Click "Add Entry" to start tracking.
+                    {t('entry.no_data')}
                   </div>
                 ) : (
-                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                    <thead>
-                      <tr style={{ background: 'var(--bg3)' }}>
-                        {['Date', 'Value', 'Note', ''].map((h, i) => (
-                          <th key={i} style={{
-                            padding: '10px 20px',
-                            textAlign: h === 'Value' ? 'right' : 'left',
-                            fontSize: 11, color: 'var(--text3)', fontWeight: 500,
-                            textTransform: 'uppercase', letterSpacing: '0.06em',
-                            borderBottom: '1px solid var(--border)'
-                          }}>{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {sortedEntries.map((entry, i) => (
-                        <tr
-                          key={entry.id}
-                          style={{ borderBottom: i < sortedEntries.length - 1 ? '1px solid var(--border)' : 'none', transition: 'background 0.1s' }}
-                          onMouseEnter={e => e.currentTarget.style.background = 'var(--bg3)'}
-                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                        >
-                          <td style={{ padding: '12px 20px', fontSize: 13, color: 'var(--text2)' }}>
-                            {new Date(entry.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
-                          </td>
-                          <td style={{ padding: '12px 20px', textAlign: 'right' }}>
-                            <span style={{ fontFamily: 'Outfit', fontWeight: 600, fontSize: 15, color: counter.color }}>{entry.value}</span>
-                            <span style={{ color: 'var(--text3)', fontSize: 12, marginLeft: 4 }}>{counter.unit}</span>
-                          </td>
-                          <td style={{ padding: '12px 20px', fontSize: 12, color: 'var(--text3)' }}>{entry.note || '—'}</td>
-                          <td style={{ padding: '12px 20px', textAlign: 'right' }}>
-                            <button
-                              onClick={() => deleteEntry(entry.id)}
-                              style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text3)', padding: '4px 6px', borderRadius: 6, transition: 'color 0.15s' }}
-                              onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
-                              onMouseLeave={e => e.currentTarget.style.color = 'var(--text3)'}
-                            >
-                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                            </button>
-                          </td>
+                  <div style={{ overflowY: 'auto', flex: 1 }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
+                        <tr style={{ background: 'var(--bg3)' }}>
+                          {[t('fields.date'), t('fields.value'), t('fields.note'), ''].map((h, i) => (
+                            <th key={i} style={{
+                              padding: '10px 20px',
+                              textAlign: h === t('fields.value') ? 'right' : 'left',
+                              fontSize: 11, color: 'var(--text3)', fontWeight: 500,
+                              textTransform: 'uppercase', letterSpacing: '0.06em',
+                              borderBottom: '1px solid var(--border)'
+                            }}>{h}</th>
+                          ))}
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {sortedEntries.map((entry, i) => (
+                          <tr
+                            key={entry.id}
+                            style={{ borderBottom: i < sortedEntries.length - 1 ? '1px solid var(--border)' : 'none', transition: 'background 0.1s' }}
+                            onMouseEnter={e => e.currentTarget.style.background = 'var(--bg3)'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                          >
+                            <td style={{ padding: '12px 20px', fontSize: 13, color: 'var(--text2)' }}>
+                              {new Date(entry.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
+                            </td>
+                            <td style={{ padding: '12px 20px', textAlign: 'right' }}>
+                              <span style={{ fontFamily: 'Outfit', fontWeight: 600, fontSize: 15, color: counter.color }}>{entry.value}</span>
+                              <span style={{ color: 'var(--text3)', fontSize: 12, marginLeft: 4 }}>{counter.unit}</span>
+                            </td>
+                            <td style={{ padding: '12px 20px', fontSize: 12, color: 'var(--text3)' }}>{entry.note || '—'}</td>
+                            <td style={{ padding: '12px 20px', textAlign: 'right' }}>
+                              <button
+                                onClick={() => deleteEntry(entry.id)}
+                                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text3)', padding: '4px 6px', borderRadius: 6, transition: 'color 0.15s' }}
+                                onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
+                                onMouseLeave={e => e.currentTarget.style.color = 'var(--text3)'}
+                              >
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
               </div>
             </div>
@@ -1180,13 +1254,13 @@ export default function App() {
               </button>
             )}
             <div style={{ fontSize: 40 }}>⚡</div>
-            <div style={{ fontFamily: 'Outfit', fontSize: 18, fontWeight: 600 }}>No counters yet</div>
+            <div style={{ fontFamily: 'Outfit', fontSize: 18, fontWeight: 600 }}>{t('counter.no_counters')}</div>
             <div style={{ color: 'var(--text2)', fontSize: 14 }}>Add your first counter to start tracking</div>
             <button
               onClick={() => setShowAddCounter(true)}
               style={{ marginTop: 8, background: '#3b82f6', border: 'none', borderRadius: 12, padding: '10px 22px', color: '#fff', cursor: 'pointer', fontFamily: 'DM Sans', fontSize: 14, fontWeight: 500 }}
             >
-              Add Counter
+              {t('counter.add')}
             </button>
           </div>
         )
