@@ -22,8 +22,7 @@ jobs:
         run: |
           gh release create ${{ github.ref_name }} \
             --title "${{ github.ref_name }}" \
-            --generate-notes \
-            --draft
+            --generate-notes
 
   # Builds macOS Electron DMG (Apple Silicon)
   electron-mac:
@@ -54,13 +53,13 @@ jobs:
         run: |
           APP=$(find electron/release -name "*.app" -maxdepth 3 | head -1)
           codesign --deep --force --sign - "$APP"
-      - name: Package DMG
+      - name: Package DMG and upload
         working-directory: electron
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           APP=$(find release -name "*.app" -maxdepth 3 | head -1)
-          npx electron-builder --mac dmg --prepackaged "$APP"
+          npx electron-builder --mac dmg --prepackaged "$APP" --publish always
 
   # Builds Windows Electron NSIS installer (x64)
   electron-win:
@@ -90,7 +89,7 @@ jobs:
         working-directory: electron
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx electron-builder --win nsis
+        run: npx electron-builder --win nsis --publish always
 
   # Builds Linux Electron AppImage (x64)
   electron-linux:
@@ -121,4 +120,4 @@ jobs:
         working-directory: electron
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx electron-builder --linux AppImage
+        run: npx electron-builder --linux AppImage --publish always
