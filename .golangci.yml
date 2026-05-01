@@ -31,7 +31,5 @@ linters-settings:
 
 issues:
   exclude-use-default: false
-
-run:
-  skip-dirs:
+  exclude-dirs:
     - web/node_modules

@@ -29,13 +29,10 @@ jobs:
             exit 1
           fi
 
-      - name: Install golangci-lint
-        run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-
       - name: Lint
-        env:
-          CGO_ENABLED: "1"
-        run: golangci-lint run ./...
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v2
 
       - name: Test
         env:

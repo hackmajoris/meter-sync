@@ -44,20 +44,18 @@ jobs:
         run: npm ci && npm run build
       - name: Build Electron app (dir)
         working-directory: electron
-        run: npx electron-builder --mac dir
+        run: npx electron-builder --mac dir --publish never
       - name: Deep-sign app bundle
         run: |
           APP=$(find electron/release -name "*.app" -maxdepth 3 | head -1)
           codesign --deep --force --sign - "$APP"
       - name: Package DMG
         working-directory: electron
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           APP=$(find release -name "*.app" -maxdepth 3 | head -1)
           npx electron-builder --mac dmg --prepackaged "$APP"
-      - name: Upload DMG to release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload ${{ github.ref_name }} electron/release/*.dmg --clobber
 
   # Builds Windows Electron NSIS installer (x64)
   electron-win:
@@ -85,11 +83,9 @@ jobs:
         run: npm ci && npm run build
       - name: Build Electron Windows installer
         working-directory: electron
-        run: npx electron-builder --win nsis
-      - name: Upload installer to release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload ${{ github.ref_name }} electron/release/*.exe --clobber
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --win nsis
 
   # Builds Linux Electron AppImage (x64)
   electron-linux:
@@ -118,8 +114,6 @@ jobs:
         run: npm ci && npm run build
       - name: Build Electron AppImage
         working-directory: electron
-        run: npx electron-builder --linux AppImage
-      - name: Upload AppImage to release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload ${{ github.ref_name }} electron/release/*.AppImage --clobber
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --linux AppImage
