@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -34,7 +35,16 @@ func run(ctx context.Context, args []string, out io.Writer) error {
 		return err
 	}
 
-	st, err := store.New(*dbPath)
+	// Env vars take precedence over flags (Electron passes them).
+	if v := os.Getenv("DB_PATH"); v != "" {
+		*dbPath = v
+	}
+	dbKey := os.Getenv("DB_KEY")
+	if port := os.Getenv("PORT"); port != "" {
+		*addr = ":" + port
+	}
+
+	st, err := store.New(*dbPath, dbKey)
 	if err != nil {
 		return fmt.Errorf("opening store: %w", err)
 	}
@@ -44,15 +54,20 @@ func run(ctx context.Context, args []string, out io.Writer) error {
 	api.Register(mux, st)
 	mux.Handle("/", web.Handler())
 
-	srv := &http.Server{Addr: *addr, Handler: mux}
+	ln, err := net.Listen("tcp", *addr)
+	if err != nil {
+		return fmt.Errorf("listen: %w", err)
+	}
+	port := ln.Addr().(*net.TCPAddr).Port
+	fmt.Fprintf(out, "Server running on http://localhost:%d\n", port)
 
+	srv := &http.Server{Handler: mux}
 	go func() {
 		<-ctx.Done()
 		srv.Shutdown(context.Background()) //nolint:errcheck
 	}()
 
-	fmt.Fprintf(out, "listening on %s\n", *addr)
-	if err := srv.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
+	if err := srv.Serve(ln); !errors.Is(err, http.ErrServerClosed) {
 		return err
 	}
 	return nil

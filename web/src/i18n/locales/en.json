@@ -10,7 +10,10 @@
   },
   "house": {
     "new": "New House",
-    "add": "Add House"
+    "add": "Add House",
+    "no_houses": "No home yet",
+    "no_houses_sub": "Add your first home to start tracking",
+    "no_counters_sub": "Add your first counter to start tracking"
   },
   "entry": {
     "add": "Add Entry",
@@ -68,7 +71,21 @@
     "import_success": "✓ {{count}} entries added",
     "import_error": "No valid entries found",
     "language": "Language",
-    "language_subtitle": "Choose your preferred language"
+    "language_subtitle": "Choose your preferred language",
+    "database": "Database",
+    "database_subtitle": "Encryption and file location settings",
+    "db_location": "Location",
+    "db_password": "Encryption password",
+    "db_change_password": "Change password",
+    "db_new_password": "New password",
+    "db_confirm_password": "Confirm new password",
+    "db_set_password": "Set new password",
+    "db_password_warning": "If you lose this password your data will be permanently inaccessible. Store it in a password manager.",
+    "db_reset": "Disconnect",
+    "db_reset_desc": "Clears the saved path and password. The database file itself is not deleted.",
+    "db_reset_btn": "Disconnect…",
+    "db_confirm_reset": "Yes, disconnect",
+    "cancel": "Cancel"
   },
   "entries": {
     "title": "Daily Entries",

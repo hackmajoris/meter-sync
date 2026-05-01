@@ -13,7 +13,7 @@ func TestRun(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	errc := make(chan error, 1)
 	go func() {
-		errc <- run(ctx, []string{"-db", db, "-addr", "localhost:0"}, &bytes.Buffer{})
+		errc <- run(ctx, []string{"-db", db, "-addr", ":0"}, &bytes.Buffer{})
 	}()
 
 	cancel()

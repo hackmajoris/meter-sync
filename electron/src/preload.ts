@@ -1,6 +1,11 @@
-import { contextBridge } from "electron";
+import { contextBridge, ipcRenderer } from "electron";
 
-// Expose safe APIs to the renderer process
 contextBridge.exposeInMainWorld("electronAPI", {
-  platform: process.platform,
+  platform:      process.platform,
+  getConfig:     ()                   => ipcRenderer.invoke("get-config"),
+  pickDbFolder:  ()                   => ipcRenderer.invoke("pick-db-folder"),
+  pickDbFile:    ()                   => ipcRenderer.invoke("pick-db-file"),
+  completeSetup: (data: unknown)      => ipcRenderer.invoke("complete-setup", data),
+  changeKey:     (newKey: string)     => ipcRenderer.invoke("change-key", { newKey }),
+  resetConfig:   ()                   => ipcRenderer.invoke("reset-config"),
 });

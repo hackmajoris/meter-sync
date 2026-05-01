@@ -10,7 +10,10 @@
   },
   "house": {
     "new": "Casă Nouă",
-    "add": "Adaugă Casă"
+    "add": "Adaugă Casă",
+    "no_houses": "Nicio casă încă",
+    "no_houses_sub": "Adaugă prima casă pentru a începe urmărirea",
+    "no_counters_sub": "Adaugă primul contor pentru a începe urmărirea"
   },
   "entry": {
     "add": "Adaugă Înregistrare",
@@ -68,7 +71,21 @@
     "import_success": "✓ {{count}} înregistrări adăugate",
     "import_error": "Nicio înregistrare validă găsită",
     "language": "Limbă",
-    "language_subtitle": "Alege limba preferată"
+    "language_subtitle": "Alege limba preferată",
+    "database": "Baza de date",
+    "database_subtitle": "Setări de criptare și locație fișier",
+    "db_location": "Locație",
+    "db_password": "Parolă criptare",
+    "db_change_password": "Schimbă parola",
+    "db_new_password": "Parolă nouă",
+    "db_confirm_password": "Confirmă parola nouă",
+    "db_set_password": "Setează parola nouă",
+    "db_password_warning": "Dacă pierzi această parolă, datele tale vor fi permanent inaccesibile. Salvează-o într-un manager de parole.",
+    "db_reset": "Deconectare",
+    "db_reset_desc": "Șterge calea și parola salvate. Fișierul bazei de date nu este șters.",
+    "db_reset_btn": "Deconectare…",
+    "db_confirm_reset": "Da, deconectează",
+    "cancel": "Anulează"
   },
   "entries": {
     "title": "Înregistrări Zilnice",

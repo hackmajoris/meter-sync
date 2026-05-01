@@ -11,33 +11,49 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"net/url"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/hackmajoris/counters/pkg/store"
-	_ "modernc.org/sqlite"
+	_ "github.com/mutecomm/go-sqlcipher/v4"
 )
 
 func main() {
 	dbPath := flag.String("db", "data/data.db", "sqlite database path")
+	dbKey := flag.String("key", "", "sqlite encryption key (or set DB_KEY env var)")
 	flag.Parse()
 
-	if err := seed(*dbPath); err != nil {
+	if k := os.Getenv("DB_KEY"); k != "" {
+		*dbKey = k
+	}
+
+	if err := seed(*dbPath, *dbKey); err != nil {
 		fmt.Fprintf(os.Stderr, "seed: %v\n", err)
 		os.Exit(1)
 	}
 	fmt.Println("seed complete")
 }
 
-func seed(path string) error {
+func seed(path, key string) error {
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return fmt.Errorf("create db dir: %w", err)
+	}
 	// store.New runs the schema migrations so all tables exist.
-	st, err := store.New(path)
+	st, err := store.New(path, key)
 	if err != nil {
 		return fmt.Errorf("init schema: %w", err)
 	}
 	st.Close()
 
-	db, err := sql.Open("sqlite", path)
+	dsn := path
+	if key != "" {
+		dsn = "file:" + url.PathEscape(path) +
+			"?_pragma_key=" + url.QueryEscape(key) +
+			"&_pragma_cipher_page_size=4096"
+	}
+	db, err := sql.Open("sqlite3", dsn)
 	if err != nil {
 		return fmt.Errorf("open db: %w", err)
 	}

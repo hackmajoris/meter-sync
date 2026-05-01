@@ -3,12 +3,42 @@ import { useAppData } from './hooks/useAppData'
 import { Sidebar } from './components/layout/Sidebar'
 import { DashboardPage } from './components/layout/DashboardPage'
 import { SettingsPage } from './components/layout/SettingsPage'
+import { SetupView } from './components/layout/SetupView'
 import { AddCounterModal } from './components/modals/AddCounterModal'
 import { AddHouseModal } from './components/modals/AddHouseModal'
 import { AddEntryModal } from './components/modals/AddEntryModal'
 import { ExpandedChart } from './components/charts/ExpandedChart'
 
+type AppState = 'checking' | 'setup' | 'ready'
+
 export default function App() {
+  const [appState, setAppState] = useState<AppState>(
+    () => window.electronAPI ? 'checking' : 'ready'
+  )
+
+  useEffect(() => {
+    if (!window.electronAPI) return
+    window.electronAPI.getConfig().then(cfg => {
+      setAppState(cfg.configured ? 'ready' : 'setup')
+    })
+  }, [])
+
+  if (appState === 'checking') {
+    return (
+      <div style={{ height: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ fontFamily: 'DM Sans', fontSize: 14, color: 'var(--text2)' }}>Loading…</div>
+      </div>
+    )
+  }
+
+  if (appState === 'setup') {
+    return <SetupView />
+  }
+
+  return <MainApp />
+}
+
+function MainApp() {
   const {
     houses, 
     counters, 
@@ -175,6 +205,8 @@ export default function App() {
               onDeleteEntry={handleDeleteEntry}
               onExpandChart={() => setShowExpandedChart(true)}
               onAddCounter={() => setShowAddCounter(true)}
+              onAddHouse={() => setShowAddHouse(true)}
+              hasHouses={houses.length > 0}
               isMobile={isMobile}
               onOpenSidebar={() => setSidebarOpen(true)}
             />

@@ -1,9 +1,11 @@
-import { useRef, useState, type FC } from 'react'
+import { useRef, useState, useEffect, type FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { CounterWithEntries } from '../../hooks/useAppData'
 import { parseCSV, downloadFile } from '../../utils/helpers'
 import { getCounterIcon } from '../icons/CounterIcons'
 import { LanguageSwitcher } from '../common/LanguageSwitcher'
+
+const isElectron = !!window.electronAPI
 
 export interface SettingsPageProps {
   counters: CounterWithEntries[]
@@ -16,6 +18,38 @@ export const SettingsPage: FC<SettingsPageProps> = ({ counters, onImport, onBack
   const [importFeedback, setImportFeedback] = useState<Record<string, string>>({})
   const fileInputRef = useRef<HTMLInputElement>(null)
   const currentCounterRef = useRef<string | null>(null)
+
+  // Database section state (Electron only)
+  const [dbPath, setDbPath] = useState<string | null>(null)
+  const [keySet, setKeySet] = useState(false)
+  const [changingKey, setChangingKey] = useState(false)
+  const [newKey, setNewKey] = useState('')
+  const [newKeyConfirm, setNewKeyConfirm] = useState('')
+  const [keyError, setKeyError] = useState<string | null>(null)
+  const [confirmReset, setConfirmReset] = useState(false)
+
+  useEffect(() => {
+    if (!isElectron) return
+    window.electronAPI!.getConfig().then(cfg => {
+      setDbPath(cfg.dbPath)
+      setKeySet(cfg.keySet)
+    })
+  }, [])
+
+  async function handleChangeKey(e: React.FormEvent) {
+    e.preventDefault()
+    if (newKey !== newKeyConfirm) { setKeyError('Passwords do not match.'); return }
+    setKeyError(null)
+    const result = await window.electronAPI!.changeKey(newKey)
+    if (result.ok) {
+      setKeySet(true)
+      setChangingKey(false)
+      setNewKey('')
+      setNewKeyConfirm('')
+    } else {
+      setKeyError(result.error ?? 'Failed to change password.')
+    }
+  }
 
   const handleImportClick = (counterId: string) => {
     currentCounterRef.current = counterId
@@ -110,6 +144,95 @@ export const SettingsPage: FC<SettingsPageProps> = ({ counters, onImport, onBack
           </div>
           <LanguageSwitcher />
         </div>
+
+        {/* Database section — Electron only */}
+        {isElectron && (
+          <div style={{ marginBottom: 32, padding: '16px 20px', background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 12 }}>
+            <div style={{ fontFamily: 'Outfit', fontSize: 14, fontWeight: 600, marginBottom: 4 }}>{t('settings.database')}</div>
+            <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 16 }}>{t('settings.database_subtitle')}</div>
+
+            {/* Location row */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, paddingBottom: 14, borderBottom: '1px solid var(--border)' }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 12, color: 'var(--text2)', marginBottom: 3, fontWeight: 500 }}>{t('settings.db_location')}</div>
+                <div style={{ fontSize: 12, color: 'var(--text3)', wordBreak: 'break-all' }}>{dbPath ?? '—'}</div>
+              </div>
+            </div>
+
+            {/* Encryption key row */}
+            <div style={{ paddingTop: 14, paddingBottom: 14, borderBottom: '1px solid var(--border)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 12, color: 'var(--text2)', marginBottom: 3, fontWeight: 500 }}>{t('settings.db_password')}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text3)' }}>{keySet ? '••••••••' : 'Not set'}</div>
+                </div>
+                <button
+                  onClick={() => { setChangingKey(v => !v); setKeyError(null); setNewKey(''); setNewKeyConfirm('') }}
+                  style={{ background: 'var(--bg4)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px', color: 'var(--text2)', cursor: 'pointer', fontFamily: 'DM Sans', fontSize: 12, fontWeight: 500, flexShrink: 0 }}
+                >
+                  {changingKey ? t('settings.cancel') : t('settings.db_change_password')}
+                </button>
+              </div>
+              {changingKey && (
+                <form onSubmit={handleChangeKey} style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div style={{ fontSize: 12, color: '#f59e0b', lineHeight: 1.5, background: 'rgba(245,158,11,0.08)', borderRadius: 8, padding: '8px 12px' }}>
+                    {t('settings.db_password_warning')}
+                  </div>
+                  <input
+                    type="password"
+                    placeholder={t('settings.db_new_password')}
+                    value={newKey}
+                    onChange={e => setNewKey(e.target.value)}
+                    style={{ background: 'var(--bg3)', border: '1px solid var(--border2)', borderRadius: 8, padding: '9px 12px', color: 'var(--text)', fontFamily: 'DM Sans', fontSize: 13, outline: 'none' }}
+                  />
+                  <input
+                    type="password"
+                    placeholder={t('settings.db_confirm_password')}
+                    value={newKeyConfirm}
+                    onChange={e => setNewKeyConfirm(e.target.value)}
+                    style={{ background: 'var(--bg3)', border: '1px solid var(--border2)', borderRadius: 8, padding: '9px 12px', color: 'var(--text)', fontFamily: 'DM Sans', fontSize: 13, outline: 'none' }}
+                  />
+                  {keyError && <div style={{ fontSize: 12, color: '#ef4444' }}>{keyError}</div>}
+                  <button
+                    type="submit"
+                    disabled={!newKey || !newKeyConfirm || newKey !== newKeyConfirm}
+                    style={{ background: 'var(--bg4)', border: '1px solid var(--border2)', borderRadius: 8, padding: '9px', color: 'var(--text)', cursor: 'pointer', fontFamily: 'DM Sans', fontSize: 13, fontWeight: 500, opacity: (!newKey || !newKeyConfirm || newKey !== newKeyConfirm) ? 0.4 : 1 }}
+                  >
+                    {t('settings.db_set_password')}
+                  </button>
+                </form>
+              )}
+            </div>
+
+            {/* Reset row */}
+            <div style={{ paddingTop: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 12, color: 'var(--text2)', marginBottom: 3, fontWeight: 500 }}>{t('settings.db_reset')}</div>
+                <div style={{ fontSize: 12, color: 'var(--text3)' }}>{t('settings.db_reset_desc')}</div>
+              </div>
+              {confirmReset ? (
+                <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                  <button
+                    onClick={() => window.electronAPI!.resetConfig()}
+                    style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, padding: '6px 12px', color: '#ef4444', cursor: 'pointer', fontFamily: 'DM Sans', fontSize: 12, fontWeight: 500 }}
+                  >
+                    {t('settings.db_confirm_reset')}
+                  </button>
+                  <button onClick={() => setConfirmReset(false)} style={{ background: 'var(--bg4)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px', color: 'var(--text2)', cursor: 'pointer', fontFamily: 'DM Sans', fontSize: 12, fontWeight: 500 }}>
+                    {t('settings.cancel')}
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setConfirmReset(true)}
+                  style={{ background: 'var(--bg4)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px', color: 'var(--text3)', cursor: 'pointer', fontFamily: 'DM Sans', fontSize: 12, fontWeight: 500, flexShrink: 0 }}
+                >
+                  {t('settings.db_reset_btn')}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         <div style={{ display: 'grid', gap: 12 }}>
           {counters.map(counter => (

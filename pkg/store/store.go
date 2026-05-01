@@ -6,9 +6,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"net/url"
 	"strings"
 
-	_ "modernc.org/sqlite"
+	_ "github.com/mutecomm/go-sqlcipher/v4"
 )
 
 var (
@@ -120,38 +121,14 @@ type Store struct {
 
 type Option func(*Store)
 
-func New(path string, opts ...Option) (*Store, error) {
-	db, err := sql.Open("sqlite", path)
-	if err != nil {
-		return nil, fmt.Errorf("opening db: %w", err)
-	}
-	// single-writer mode; WAL is set per connection via init
-	db.SetMaxOpenConns(1)
-
-	s := &Store{db: db}
-	for _, o := range opts {
-		o(s)
-	}
-	if err := s.initDB(); err != nil {
-		db.Close()
-		return nil, fmt.Errorf("init db: %w", err)
-	}
-	return s, nil
-}
-
-func (s *Store) Close() error { return s.db.Close() }
-
-func (s *Store) initDB() error {
-	_, err := s.db.Exec(`
-PRAGMA journal_mode=WAL;
-PRAGMA foreign_keys=ON;
-PRAGMA busy_timeout=5000;
-
-CREATE TABLE IF NOT EXISTS houses (
+// migrations holds sequential schema changes; index 0 = migration 1.
+// Append new SQL blocks here when the schema changes; never edit existing entries.
+var migrations = []string{
+	// 1: initial schema
+	`CREATE TABLE IF NOT EXISTS houses (
     id   TEXT PRIMARY KEY,
     name TEXT NOT NULL
 );
-
 CREATE TABLE IF NOT EXISTS counters (
     id       TEXT PRIMARY KEY,
     name     TEXT NOT NULL,
@@ -159,7 +136,6 @@ CREATE TABLE IF NOT EXISTS counters (
     color    TEXT NOT NULL,
     house_id TEXT NOT NULL REFERENCES houses(id)
 );
-
 CREATE TABLE IF NOT EXISTS entries (
     id         TEXT PRIMARY KEY,
     counter_id TEXT NOT NULL REFERENCES counters(id),
@@ -167,8 +143,78 @@ CREATE TABLE IF NOT EXISTS entries (
     value      REAL NOT NULL,
     note       TEXT NOT NULL DEFAULT '',
     UNIQUE(counter_id, date)
-);`)
+);`,
+}
+
+func buildDSN(path, key string) string {
+	if key == "" {
+		return path
+	}
+	return "file:" + url.PathEscape(path) +
+		"?_pragma_key=" + url.QueryEscape(key) +
+		"&_pragma_cipher_page_size=4096"
+}
+
+func New(path, key string, opts ...Option) (*Store, error) {
+	db, err := sql.Open("sqlite3", buildDSN(path, key))
+	if err != nil {
+		return nil, fmt.Errorf("opening db: %w", err)
+	}
+	db.SetMaxOpenConns(1)
+
+	s := &Store{db: db}
+	for _, o := range opts {
+		o(s)
+	}
+	if err := s.setupConn(); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("setup connection: %w", err)
+	}
+	if err := s.migrate(); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("migrate: %w", err)
+	}
+	return s, nil
+}
+
+func (s *Store) Close() error { return s.db.Close() }
+
+// setupConn runs per-connection pragmas (not persisted across connections).
+func (s *Store) setupConn() error {
+	_, err := s.db.Exec(`
+PRAGMA journal_mode=WAL;
+PRAGMA foreign_keys=ON;
+PRAGMA busy_timeout=5000;`)
 	return err
+}
+
+// migrate applies any pending migrations using PRAGMA user_version as the schema version counter.
+func (s *Store) migrate() error {
+	var version int
+	if err := s.db.QueryRow(`PRAGMA user_version`).Scan(&version); err != nil {
+		return fmt.Errorf("read user_version: %w", err)
+	}
+
+	for i, ddl := range migrations[version:] {
+		target := version + i + 1
+		tx, err := s.db.Begin()
+		if err != nil {
+			return fmt.Errorf("begin migration %d: %w", target, err)
+		}
+		if _, err := tx.Exec(ddl); err != nil {
+			tx.Rollback() //nolint:errcheck
+			return fmt.Errorf("migration %d: %w", target, err)
+		}
+		// user_version must be set outside the transaction body in SQLite
+		if _, err := tx.Exec(fmt.Sprintf(`PRAGMA user_version = %d`, target)); err != nil {
+			tx.Rollback() //nolint:errcheck
+			return fmt.Errorf("bump user_version to %d: %w", target, err)
+		}
+		if err := tx.Commit(); err != nil {
+			return fmt.Errorf("commit migration %d: %w", target, err)
+		}
+	}
+	return nil
 }
 
 func newID() string {

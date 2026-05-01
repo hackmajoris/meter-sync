@@ -23,6 +23,8 @@ export interface DashboardPageProps {
   onDeleteEntry: (entryId: string) => void
   onExpandChart: () => void
   onAddCounter: () => void
+  onAddHouse: () => void
+  hasHouses: boolean
   isMobile: boolean
   onOpenSidebar: () => void
 }
@@ -42,6 +44,8 @@ export const DashboardPage: FC<DashboardPageProps> = ({
   onDeleteEntry,
   onExpandChart,
   onAddCounter,
+  onAddHouse,
+  hasHouses,
   isMobile,
   onOpenSidebar
 }) => {
@@ -90,14 +94,18 @@ export const DashboardPage: FC<DashboardPageProps> = ({
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
           </button>
         )}
-        <div style={{ fontSize: 40 }}>⚡</div>
-        <div style={{ fontFamily: 'Outfit', fontSize: 18, fontWeight: 600 }}>{t('counter.no_counters')}</div>
-        <div style={{ color: 'var(--text2)', fontSize: 14 }}>Add your first counter to start tracking</div>
+        <div style={{ fontSize: 40 }}>{hasHouses ? '⚡' : '🏠'}</div>
+        <div style={{ fontFamily: 'Outfit', fontSize: 18, fontWeight: 600 }}>
+          {hasHouses ? t('counter.no_counters') : t('house.no_houses')}
+        </div>
+        <div style={{ color: 'var(--text2)', fontSize: 14 }}>
+          {hasHouses ? t('house.no_counters_sub') : t('house.no_houses_sub')}
+        </div>
         <button
-          onClick={onAddCounter}
+          onClick={hasHouses ? onAddCounter : onAddHouse}
           style={{ marginTop: 8, background: '#3b82f6', border: 'none', borderRadius: 12, padding: '10px 22px', color: '#fff', cursor: 'pointer', fontFamily: 'DM Sans', fontSize: 14, fontWeight: 500 }}
         >
-          {t('counter.add')}
+          {hasHouses ? t('counter.add') : t('house.add')}
         </button>
       </div>
     )
