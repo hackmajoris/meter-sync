@@ -114,12 +114,16 @@ function createWindow(opts: {
     resizable: opts.resizable ?? true,
     minWidth: opts.minWidth,
     minHeight: opts.minHeight,
+    backgroundColor: "#0d0d12",
+    show: false,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
       nodeIntegration: false,
     },
   });
+
+  mainWindow.once("ready-to-show", () => mainWindow!.show());
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url);

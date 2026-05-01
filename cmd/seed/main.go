@@ -105,7 +105,12 @@ func seed(path, key string) error {
 	if err != nil {
 		return fmt.Errorf("prepare: %w", err)
 	}
-	defer stmt.Close() //nolint:errcheck
+	defer func(stmt *sql.Stmt) {
+		err := stmt.Close()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "close stmt: %v\n", err)
+		}
+	}(stmt) //nolicnt:errcheck
 
 	for _, c := range counters {
 		created := 0
