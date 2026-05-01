@@ -1,6 +1,4 @@
-run:
-  skip-dirs:
-    - web/node_modules
+version: "2"
 
 linters:
   enable:
@@ -9,6 +7,31 @@ linters:
     - staticcheck
     - misspell
     - revive
+  settings:
+    errcheck:
+      exclude-functions:
+        - (*database/sql.Rows).Close
+        - (*database/sql.Tx).Rollback
+        - (*database/sql.Stmt).Close
+        - (*database/sql.DB).Close
+    revive:
+      rules:
+        - name: exported
+          disabled: true
+        - name: package-comments
+          disabled: true
+  exclusions:
+    paths:
+      - web/node_modules
 
-issues:
-  exclude-use-default: false
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/hackmajoris/meter-sync
+  exclusions:
+    paths:
+      - web/node_modules
