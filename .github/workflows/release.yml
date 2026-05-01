@@ -50,16 +50,20 @@ jobs:
         run: npm ci && npm run build
       - name: Build Electron app (dir)
         working-directory: electron
-        run: npx electron-builder --mac dir --publish never --em.version=${{ env.VERSION }}
+        env:
+          npm_package_version: ${{ env.VERSION }}
+        run: npx electron-builder --mac dir --publish never
       - name: Deep-sign app bundle
         run: |
           APP=$(find electron/release -name "*.app" -maxdepth 3 | head -1)
           codesign --deep --force --sign - "$APP"
       - name: Package DMG
         working-directory: electron
+        env:
+          npm_package_version: ${{ env.VERSION }}
         run: |
           APP=$(find release -name "*.app" -maxdepth 3 | head -1)
-          npx electron-builder --mac dmg --prepackaged "$APP" --publish never --em.version=${{ env.VERSION }}
+          npx electron-builder --mac dmg --prepackaged "$APP" --publish never
       - name: Upload DMG to release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -95,7 +99,9 @@ jobs:
         run: npm ci && npm run build
       - name: Build Electron Windows installer
         working-directory: electron
-        run: npx electron-builder --win nsis --publish never --em.version=${{ env.VERSION }}
+        env:
+          npm_package_version: ${{ env.VERSION }}
+        run: npx electron-builder --win nsis --publish never
       - name: Upload installer to release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -132,7 +138,9 @@ jobs:
         run: npm ci && npm run build
       - name: Build Electron AppImage
         working-directory: electron
-        run: npx electron-builder --linux AppImage --publish never --em.version=${{ env.VERSION }}
+        env:
+          npm_package_version: ${{ env.VERSION }}
+        run: npx electron-builder --linux AppImage --publish never
       - name: Upload AppImage to release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
