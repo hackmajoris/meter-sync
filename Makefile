@@ -49,7 +49,7 @@ fmt:
 	goimports -w .
 
 clean:
-	rm -rf .bin/ web/dist/ electron/dist/
+	rm -rf .bin/ pkg/web/dist/ electron/dist/
 
 generate:
 	go generate ./...
