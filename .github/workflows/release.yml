@@ -71,7 +71,7 @@ jobs:
         run: cd electron && npm ci && npx electron-builder ${{ matrix.eb_arch }}
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: meter-sync-${{ matrix.goos }}-${{ matrix.goarch }}
           path: |
