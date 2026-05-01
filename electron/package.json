@@ -4,7 +4,10 @@
   "description": "Electron shell for counters",
   "author": "hackmajoris",
   "private": true,
-  "main": "dist/main.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hackmajoris/meter-sync.git"
+  },
   "scripts": {
     "dev": "tsc && electron .",
     "build": "tsc",
