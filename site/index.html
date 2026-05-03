@@ -337,6 +337,11 @@
                 backdrop-filter: blur(20px);
                 border-bottom: 1px solid var(--border);
             }
+            @media (max-width: 768px) {
+                nav {
+                    padding: 0 20px;
+                }
+            }
             .nav-logo {
                 display: flex;
                 align-items: center;
@@ -363,6 +368,11 @@
                 gap: 28px;
                 list-style: none;
             }
+            @media (max-width: 768px) {
+                .nav-links {
+                    display: none;
+                }
+            }
             .nav-links a {
                 color: var(--text2);
                 text-decoration: none;
@@ -388,6 +398,12 @@
             }
             .nav-cta:hover {
                 opacity: 0.85;
+            }
+            @media (max-width: 768px) {
+                .nav-cta {
+                    padding: 6px 14px;
+                    font-size: 12px;
+                }
             }
 
             /* ── Badge ── */
@@ -426,6 +442,11 @@
                 max-width: 1100px;
                 margin: 0 auto;
             }
+            @media (max-width: 768px) {
+                .section {
+                    padding: 60px 20px;
+                }
+            }
             .section-label {
                 font-size: 11px;
                 text-transform: uppercase;
@@ -451,6 +472,14 @@
                 color: var(--text3);
                 font-size: 13px;
             }
+            @media (max-width: 768px) {
+                footer {
+                    flex-direction: column;
+                    gap: 16px;
+                    padding: 24px 20px;
+                    text-align: center;
+                }
+            }
 
             /* ── Divider ── */
             .divider {
@@ -462,6 +491,11 @@
                     transparent
                 );
                 margin: 0 48px;
+            }
+            @media (max-width: 768px) {
+                .divider {
+                    margin: 0 20px;
+                }
             }
 
             /* ── Shimmer text ── */
@@ -478,6 +512,80 @@
                 -webkit-text-fill-color: transparent;
                 background-clip: text;
                 animation: shimmer 4s linear infinite;
+            }
+
+            /* ── Mobile Responsiveness ── */
+            @media (max-width: 1024px) {
+                .feature-card {
+                    padding: 22px 20px;
+                }
+            }
+
+            @media (max-width: 768px) {
+                /* Section headings */
+                .section-title {
+                    font-size: clamp(24px, 5vw, 36px) !important;
+                }
+
+                /* Feature cards - single column on mobile */
+                [style*="repeat(auto-fill"] {
+                    grid-template-columns: 1fr !important;
+                }
+
+                .feature-card {
+                    padding: 20px 16px;
+                }
+
+                /* Two-column grids - stack on mobile */
+                [style*="grid-template-columns"] {
+                    grid-template-columns: 1fr !important;
+                }
+
+                /* Download buttons - stack vertically on mobile */
+                [style*="flex-wrap"] {
+                    flex-direction: column !important;
+                }
+
+                [style*="flex-wrap"] a {
+                    width: 100% !important;
+                }
+
+                /* macOS window carousel responsive */
+                [style*="max-width: 880"] {
+                    max-width: 100% !important;
+                }
+            }
+
+            @media (max-width: 480px) {
+                nav {
+                    padding: 0 16px;
+                }
+
+                .section {
+                    padding: 50px 16px;
+                }
+
+                .divider {
+                    margin: 0 16px;
+                }
+
+                .section-label {
+                    font-size: 10px;
+                }
+
+                .dl-btn {
+                    padding: 12px 16px !important;
+                    font-size: 14px !important;
+                }
+
+                .badge {
+                    padding: 5px 12px;
+                    font-size: 11px;
+                }
+
+                footer {
+                    padding: 20px 16px;
+                }
             }
         </style>
     </head>
