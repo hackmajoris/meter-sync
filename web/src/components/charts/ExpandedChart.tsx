@@ -4,6 +4,7 @@ import type { CounterWithEntries } from '../../hooks/useAppData'
 import { MeterChart } from './MeterChart'
 import { ChartTypeToggle } from './ChartTypeToggle'
 import { GroupByToggle } from './GroupByToggle'
+import { RangeToggle, type ChartRange } from './RangeToggle'
 import { OverlayToggles } from './OverlayToggles'
 
 export interface ExpandedChartProps {
@@ -11,8 +12,10 @@ export interface ExpandedChartProps {
   chartType: 'line' | 'bar'
   onClose: () => void
   onToggleType: (type: 'line' | 'bar') => void
-  groupBy: 'day' | 'month'
-  onToggleGroupBy: (groupBy: 'day' | 'month') => void
+  groupBy: 'day' | 'month' | 'year'
+  onToggleGroupBy: (groupBy: 'day' | 'month' | 'year') => void
+  range: ChartRange
+  onToggleRange: (range: ChartRange) => void
   showAvg: boolean
   showTrend: boolean
   onToggleAvg: () => void
@@ -24,9 +27,11 @@ export const ExpandedChart: FC<ExpandedChartProps> = ({
   chartType, 
   onClose, 
   onToggleType, 
-  groupBy, 
-  onToggleGroupBy, 
-  showAvg, 
+  groupBy,
+  onToggleGroupBy,
+  range,
+  onToggleRange,
+  showAvg,
   showTrend, 
   onToggleAvg, 
   onToggleTrend 
@@ -41,6 +46,7 @@ export const ExpandedChart: FC<ExpandedChartProps> = ({
             <div style={{ color: 'var(--text2)', fontSize: 13, marginTop: 2 }}>{t('chart.full_history')}</div>
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <RangeToggle range={range} onToggle={onToggleRange} color={counter.color} />
             <GroupByToggle groupBy={groupBy} onToggle={onToggleGroupBy} color={counter.color} />
             <ChartTypeToggle type={chartType} onToggle={onToggleType} color={counter.color} />
             <button onClick={onClose} style={{
@@ -57,7 +63,7 @@ export const ExpandedChart: FC<ExpandedChartProps> = ({
           <OverlayToggles showAvg={showAvg} showTrend={showTrend} onToggleAvg={onToggleAvg} onToggleTrend={onToggleTrend} />
         </div>
         <div style={{ height: 460 }}>
-          <MeterChart counter={counter} chartType={chartType} expanded={true} groupBy={groupBy} showAvg={showAvg} showTrend={showTrend} />
+          <MeterChart counter={counter} chartType={chartType} expanded={true} groupBy={groupBy} range={range} showAvg={showAvg} showTrend={showTrend} />
         </div>
       </div>
     </div>

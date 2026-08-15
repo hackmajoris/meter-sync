@@ -39,15 +39,21 @@
   "stats": {
     "today_vs_yesterday": "Today vs Yesterday",
     "average": "Average / day",
-    "total": "Total",
-    "peak": "Peak",
-    "lowest": "Lowest"
+    "total": "Month Total",
+    "year_total": "Year Total",
+    "peak": "Month Peak",
+    "lowest": "Month Lowest"
   },
   "chart": {
     "line": "Line",
     "bar": "Bar",
     "daily": "Daily",
     "monthly": "Monthly",
+    "yearly": "Yearly",
+    "range_1y": "This Year",
+    "range_3y": "3 Years",
+    "range_5y": "5 Years",
+    "range_all": "All",
     "expand": "Expand",
     "close": "Close",
     "usage_over_time": "Usage over time",

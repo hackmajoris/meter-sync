@@ -39,15 +39,21 @@
   "stats": {
     "today_vs_yesterday": "Astăzi vs Ieri",
     "average": "Medie / zi",
-    "total": "Total",
-    "peak": "Vârf",
-    "lowest": "Minim"
+    "total": "Total lună",
+    "year_total": "Total an",
+    "peak": "Vârf lună",
+    "lowest": "Minim lună"
   },
   "chart": {
     "line": "Linie",
     "bar": "Bare",
     "daily": "Zilnic",
     "monthly": "Lunar",
+    "yearly": "Anual",
+    "range_1y": "Anul curent",
+    "range_3y": "3 ani",
+    "range_5y": "5 ani",
+    "range_all": "Tot",
     "expand": "Extinde",
     "close": "Închide",
     "usage_over_time": "Consum în timp",

@@ -6,14 +6,17 @@ import { StatCard } from '../common/StatCard'
 import { MeterChart } from '../charts/MeterChart'
 import { ChartTypeToggle } from '../charts/ChartTypeToggle'
 import { GroupByToggle } from '../charts/GroupByToggle'
+import { RangeToggle, type ChartRange } from '../charts/RangeToggle'
 import { OverlayToggles } from '../charts/OverlayToggles'
 
 export interface DashboardPageProps {
   counter: CounterWithEntries | null
   chartType: 'line' | 'bar'
   onToggleChartType: (type: 'line' | 'bar') => void
-  groupBy: 'day' | 'month'
-  onToggleGroupBy: (groupBy: 'day' | 'month') => void
+  groupBy: 'day' | 'month' | 'year'
+  onToggleGroupBy: (groupBy: 'day' | 'month' | 'year') => void
+  range: ChartRange
+  onToggleRange: (range: ChartRange) => void
   showAvg: boolean
   showTrend: boolean
   onToggleAvg: () => void
@@ -35,6 +38,8 @@ export const DashboardPage: FC<DashboardPageProps> = ({
   onToggleChartType,
   groupBy,
   onToggleGroupBy,
+  range,
+  onToggleRange,
   showAvg,
   showTrend,
   onToggleAvg,
@@ -73,11 +78,25 @@ export const DashboardPage: FC<DashboardPageProps> = ({
       diffPercent = ((diffValue / yesterdayEntry.value) * 100).toFixed(1)
     }
 
+    const month = today.slice(0, 7)
+    const year = today.slice(0, 4)
+    const monthEntries = counter.entries.filter(e => e.date.startsWith(month))
+    const monthTotal = monthEntries.reduce((a, e) => a + e.value, 0).toFixed(1)
+    const yearTotal = counter.entries.filter(e => e.date.startsWith(year)).reduce((a, e) => a + e.value, 0).toFixed(1)
+    let peak = null, low = null
+    if (monthEntries.length) {
+      const peakEntry = monthEntries.reduce((a, e) => e.value > a.value ? e : a)
+      const lowEntry = monthEntries.reduce((a, e) => e.value < a.value ? e : a)
+      peak = { value: peakEntry.value.toFixed(2), date: peakEntry.date }
+      low = { value: lowEntry.value.toFixed(2), date: lowEntry.date }
+    }
+
     return {
       avg: avg.toFixed(2),
-      total: vals.reduce((a,b) => a+b, 0).toFixed(1),
-      max: Math.max(...vals).toFixed(2),
-      min: Math.min(...vals).toFixed(2),
+      monthTotal,
+      yearTotal,
+      peak,
+      low,
       diff,
       diffPercent,
     }
@@ -174,9 +193,14 @@ export const DashboardPage: FC<DashboardPageProps> = ({
               <StatCard label={t('stats.today_vs_yesterday')} value={stats.diff} unit={counter.unit} color={counter.color} percent={parseFloat(stats.diffPercent!)} />
             )}
             <StatCard label={t('stats.average')} value={stats.avg} unit={counter.unit} color={counter.color} />
-            <StatCard label={t('stats.total')} value={stats.total} unit={counter.unit} color={counter.color} />
-            <StatCard label={t('stats.peak')} value={stats.max} unit={counter.unit} color={counter.color} />
-            <StatCard label={t('stats.lowest')} value={stats.min} unit={counter.unit} color={counter.color} />
+            <StatCard label={t('stats.total')} value={stats.monthTotal} unit={counter.unit} color={counter.color} />
+            <StatCard label={t('stats.year_total')} value={stats.yearTotal} unit={counter.unit} color={counter.color} />
+            {stats.peak && (
+              <StatCard label={t('stats.peak')} value={stats.peak.value} unit={counter.unit} color={counter.color} sub={stats.peak.date} />
+            )}
+            {stats.low && (
+              <StatCard label={t('stats.lowest')} value={stats.low.value} unit={counter.unit} color={counter.color} sub={stats.low.date} />
+            )}
           </div>
         )}
 
@@ -187,6 +211,7 @@ export const DashboardPage: FC<DashboardPageProps> = ({
               <div style={{ color: 'var(--text3)', fontSize: 12, marginTop: 2 }}>{t('chart.last_entries', { count: counter.entries.length })}</div>
             </div>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <RangeToggle range={range} onToggle={onToggleRange} color={counter.color} />
               <GroupByToggle groupBy={groupBy} onToggle={onToggleGroupBy} color={counter.color} />
               <ChartTypeToggle type={chartType} onToggle={onToggleChartType} color={counter.color} />
               <button
@@ -211,7 +236,7 @@ export const DashboardPage: FC<DashboardPageProps> = ({
           </div>
           <div style={{ height: 200 }}>
             {counter.entries.length > 0
-              ? <MeterChart counter={counter} chartType={chartType} expanded={false} groupBy={groupBy} showAvg={showAvg} showTrend={showTrend} />
+              ? <MeterChart counter={counter} chartType={chartType} expanded={false} groupBy={groupBy} range={range} showAvg={showAvg} showTrend={showTrend} />
               : <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text3)', fontSize: 13 }}>{t('entry.no_data')}</div>
             }
           </div>

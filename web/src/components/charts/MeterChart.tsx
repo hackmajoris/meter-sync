@@ -12,6 +12,7 @@ import {
 } from 'chart.js'
 import { Line, Bar } from 'react-chartjs-2'
 import type { CounterWithEntries } from '../../hooks/useAppData'
+import type { ChartRange } from './RangeToggle'
 import { polyfit } from '../../utils/helpers'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Filler, Tooltip)
@@ -20,24 +21,45 @@ export interface MeterChartProps {
   counter: CounterWithEntries
   chartType: 'line' | 'bar'
   expanded: boolean
-  groupBy?: 'day' | 'month'
+  groupBy?: 'day' | 'month' | 'year'
+  range?: ChartRange
   showAvg?: boolean
   showTrend?: boolean
 }
 
-export const MeterChart: FC<MeterChartProps> = ({ 
-  counter, 
-  chartType, 
-  expanded, 
-  groupBy = 'day', 
-  showAvg = false, 
-  showTrend = false 
+export const MeterChart: FC<MeterChartProps> = ({
+  counter,
+  chartType,
+  expanded,
+  groupBy = 'day',
+  range = '1y',
+  showAvg = false,
+  showTrend = false
 }) => {
   const { t } = useTranslation()
   const chartRef = useRef(null)
-  const sortedEntries = useMemo(() => [...counter.entries].sort((a,b) => a.date.localeCompare(b.date)), [counter.entries])
+  const sortedEntries = useMemo(() => {
+    const all = [...counter.entries].sort((a,b) => a.date.localeCompare(b.date))
+    if (range === 'all') return all
+    const years = range === '1y' ? 1 : range === '3y' ? 3 : 5
+    const minYear = new Date().getFullYear() - (years - 1)
+    return all.filter(e => +e.date.slice(0, 4) >= minYear)
+  }, [counter.entries, range])
 
   const { labels, values } = useMemo(() => {
+    if (groupBy === 'year') {
+      const buckets: Record<string, number> = {}
+      for (const e of sortedEntries) {
+        const key = e.date.slice(0, 4)
+        if (!buckets[key]) buckets[key] = 0
+        buckets[key] += e.value
+      }
+      const keys = Object.keys(buckets).sort()
+      return {
+        labels: keys,
+        values: keys.map(k => +buckets[k].toFixed(2)),
+      }
+    }
     if (groupBy === 'month') {
       const buckets: Record<string, number> = {}
       for (const e of sortedEntries) {

@@ -8,6 +8,7 @@ import { AddCounterModal } from './components/modals/AddCounterModal'
 import { AddHouseModal } from './components/modals/AddHouseModal'
 import { AddEntryModal } from './components/modals/AddEntryModal'
 import { ExpandedChart } from './components/charts/ExpandedChart'
+import type { ChartRange } from './components/charts/RangeToggle'
 
 type AppState = 'checking' | 'setup' | 'ready'
 
@@ -55,7 +56,8 @@ function MainApp() {
   // UI state
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [chartType, setChartType] = useState<'line' | 'bar'>('line')
-  const [groupBy, setGroupBy] = useState<'day' | 'month'>('day')
+  const [groupBy, setGroupBy] = useState<'day' | 'month' | 'year'>('day')
+  const [range, setRange] = useState<ChartRange>('1y')
   const [showAvg, setShowAvg] = useState(false)
   const [showTrend, setShowTrend] = useState(false)
   const [view, setView] = useState<'dashboard' | 'settings'>('dashboard')
@@ -196,6 +198,8 @@ function MainApp() {
               onToggleChartType={setChartType}
               groupBy={groupBy}
               onToggleGroupBy={setGroupBy}
+              range={range}
+              onToggleRange={setRange}
               showAvg={showAvg}
               showTrend={showTrend}
               onToggleAvg={() => setShowAvg(v => !v)}
@@ -241,9 +245,11 @@ function MainApp() {
             chartType={chartType} 
             onClose={() => setShowExpandedChart(false)} 
             onToggleType={setChartType} 
-            groupBy={groupBy} 
-            onToggleGroupBy={setGroupBy} 
-            showAvg={showAvg} 
+            groupBy={groupBy}
+            onToggleGroupBy={setGroupBy}
+            range={range}
+            onToggleRange={setRange}
+            showAvg={showAvg}
             showTrend={showTrend} 
             onToggleAvg={() => setShowAvg(v => !v)} 
             onToggleTrend={() => setShowTrend(v => !v)} 
