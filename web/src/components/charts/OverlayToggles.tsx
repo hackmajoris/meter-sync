@@ -25,7 +25,7 @@ export const OverlayToggles: FC<OverlayTogglesProps> = ({ showAvg, showTrend, on
       >
         {checked && <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><polyline points="1.5,5 4,7.5 8.5,2.5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
       </div>
-      <span style={{ fontSize: 12, color: checked ? dotColor : 'var(--text2)', fontFamily: 'DM Sans', fontWeight: 500, transition: 'color 0.15s' }}>{label}</span>
+      <span style={{ fontSize: 12, color: checked ? dotColor : 'var(--text2)', fontFamily: 'Inter Variable', fontWeight: 500, transition: 'color 0.15s' }}>{label}</span>
     </label>
   )
   

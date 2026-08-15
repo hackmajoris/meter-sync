@@ -47,7 +47,7 @@ export const Sidebar: FC<SidebarProps> = ({
       } : {})
     }}>
       <div style={{ padding: '24px 20px 18px', borderBottom: '1px solid var(--border)' }}>
-        <div style={{ fontFamily: 'Outfit', fontSize: 17, fontWeight: 700, letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ fontFamily: 'Outfit Variable', fontSize: 17, fontWeight: 700, letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{
             width: 28, height: 28, borderRadius: 8,
             background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
@@ -140,7 +140,7 @@ export const Sidebar: FC<SidebarProps> = ({
             width: '100%', padding: '9px', borderRadius: 11,
             background: 'var(--bg3)', border: '1px dashed var(--border2)',
             color: 'var(--text2)', cursor: 'pointer',
-            fontFamily: 'DM Sans', fontSize: 13, fontWeight: 500,
+            fontFamily: 'Inter Variable', fontSize: 13, fontWeight: 500,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
             transition: 'background 0.15s, color 0.15s'
           }}
@@ -163,7 +163,7 @@ export const Sidebar: FC<SidebarProps> = ({
             border: '1px solid var(--border)',
             color: view === 'settings' ? 'var(--text)' : 'var(--text2)',
             cursor: 'pointer',
-            fontFamily: 'DM Sans', fontSize: 13, fontWeight: 500,
+            fontFamily: 'Inter Variable', fontSize: 13, fontWeight: 500,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
             transition: 'background 0.15s, color 0.15s'
           }}

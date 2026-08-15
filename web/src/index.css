@@ -25,12 +25,23 @@
   --text3: #8a8a9c;
 }
 
-html, body, #root {
+html {
+  /* zoom enlarges content; divide height back so the app still fits the viewport
+     (inner scroll regions absorb overflow instead of clipping the layout). */
+  zoom: var(--zoom, 1);
+  height: calc(100dvh / var(--zoom, 1));
+}
+
+body, #root {
   height: 100%;
+}
+
+html, body, #root {
   background: var(--bg);
   color: var(--text);
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter Variable', sans-serif;
   font-size: 14px;
+  font-variant-numeric: tabular-nums;
   overflow: hidden;
 }
 
@@ -57,7 +68,7 @@ html, body, #root {
   animation: slideUp 0.2s ease;
 }
 .modal h2 {
-  font-family: 'Outfit', sans-serif;
+  font-family: 'Outfit Variable', sans-serif;
   font-size: 18px; font-weight: 600;
   margin-bottom: 20px;
 }
@@ -73,7 +84,7 @@ html, body, #root {
   border-radius: 10px;
   padding: 10px 14px;
   color: var(--text);
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter Variable', sans-serif;
   font-size: 14px;
   outline: none;
   transition: border-color 0.15s;
@@ -87,7 +98,7 @@ html, body, #root {
   flex: 1; padding: 11px; border-radius: 12px;
   background: var(--accent, #3b82f6);
   color: #fff; border: none; cursor: pointer;
-  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+  font-family: 'Inter Variable', sans-serif; font-size: 14px; font-weight: 500;
   transition: opacity 0.15s;
 }
 .btn-primary:hover { opacity: 0.85; }
@@ -95,7 +106,7 @@ html, body, #root {
   padding: 11px 18px; border-radius: 12px;
   background: var(--bg4); color: var(--text2);
   border: none; cursor: pointer;
-  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  font-family: 'Inter Variable', sans-serif; font-size: 14px;
   transition: background 0.15s;
 }
 .btn-ghost:hover { background: var(--bg3); color: var(--text); }

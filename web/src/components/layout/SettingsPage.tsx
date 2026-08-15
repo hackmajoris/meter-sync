@@ -5,6 +5,7 @@ import { parseCSV, downloadFile } from '../../utils/helpers'
 import { getCounterIcon } from '../icons/CounterIcons'
 import { LanguageSwitcher } from '../common/LanguageSwitcher'
 import { ThemeSwitcher, type Theme } from '../common/ThemeSwitcher'
+import { ScaleSwitcher, type Scale } from '../common/ScaleSwitcher'
 
 const isElectron = !!window.electronAPI
 
@@ -14,9 +15,11 @@ export interface SettingsPageProps {
   onBack: () => void
   theme: Theme
   onToggleTheme: (theme: Theme) => void
+  scale: Scale
+  onToggleScale: (scale: Scale) => void
 }
 
-export const SettingsPage: FC<SettingsPageProps> = ({ counters, onImport, onBack, theme, onToggleTheme }) => {
+export const SettingsPage: FC<SettingsPageProps> = ({ counters, onImport, onBack, theme, onToggleTheme, scale, onToggleScale }) => {
   const { t } = useTranslation()
   const [importFeedback, setImportFeedback] = useState<Record<string, string>>({})
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -119,14 +122,14 @@ export const SettingsPage: FC<SettingsPageProps> = ({ counters, onImport, onBack
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16
       }}>
         <div>
-          <div style={{ fontFamily: 'Outfit', fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em' }}>{t('settings.title')}</div>
+          <div style={{ fontFamily: 'Outfit Variable', fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em' }}>{t('settings.title')}</div>
           <div style={{ color: 'var(--text3)', fontSize: 12, marginTop: 1 }}>{t('settings.subtitle')}</div>
         </div>
         <button
           onClick={onBack}
           style={{
             background: 'transparent', border: 'none', padding: '7px 10px', borderRadius: 9,
-            cursor: 'pointer', color: 'var(--text2)', fontFamily: 'DM Sans', fontSize: 13,
+            cursor: 'pointer', color: 'var(--text2)', fontFamily: 'Inter Variable', fontSize: 13,
             display: 'flex', alignItems: 'center', gap: 6, transition: 'color 0.15s'
           }}
           onMouseEnter={e => e.currentTarget.style.color = 'var(--text)'}
@@ -141,7 +144,7 @@ export const SettingsPage: FC<SettingsPageProps> = ({ counters, onImport, onBack
         <div style={{ marginBottom: 32, padding: '16px 20px', background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <div>
-              <div style={{ fontFamily: 'Outfit', fontSize: 14, fontWeight: 600 }}>{t('settings.language')}</div>
+              <div style={{ fontFamily: 'Outfit Variable', fontSize: 14, fontWeight: 600 }}>{t('settings.language')}</div>
               <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>{t('settings.language_subtitle')}</div>
             </div>
           </div>
@@ -151,17 +154,27 @@ export const SettingsPage: FC<SettingsPageProps> = ({ counters, onImport, onBack
         <div style={{ marginBottom: 32, padding: '16px 20px', background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <div>
-              <div style={{ fontFamily: 'Outfit', fontSize: 14, fontWeight: 600 }}>{t('settings.theme')}</div>
+              <div style={{ fontFamily: 'Outfit Variable', fontSize: 14, fontWeight: 600 }}>{t('settings.theme')}</div>
               <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>{t('settings.theme_subtitle')}</div>
             </div>
           </div>
           <ThemeSwitcher theme={theme} onChange={onToggleTheme} />
         </div>
 
+        <div style={{ marginBottom: 32, padding: '16px 20px', background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <div>
+              <div style={{ fontFamily: 'Outfit Variable', fontSize: 14, fontWeight: 600 }}>{t('settings.scale')}</div>
+              <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>{t('settings.scale_subtitle')}</div>
+            </div>
+          </div>
+          <ScaleSwitcher scale={scale} onChange={onToggleScale} />
+        </div>
+
         {/* Database section — Electron only */}
         {isElectron && (
           <div style={{ marginBottom: 32, padding: '16px 20px', background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 12 }}>
-            <div style={{ fontFamily: 'Outfit', fontSize: 14, fontWeight: 600, marginBottom: 4 }}>{t('settings.database')}</div>
+            <div style={{ fontFamily: 'Outfit Variable', fontSize: 14, fontWeight: 600, marginBottom: 4 }}>{t('settings.database')}</div>
             <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 16 }}>{t('settings.database_subtitle')}</div>
 
             {/* Location row */}
@@ -181,7 +194,7 @@ export const SettingsPage: FC<SettingsPageProps> = ({ counters, onImport, onBack
                 </div>
                 <button
                   onClick={() => { setChangingKey(v => !v); setKeyError(null); setNewKey(''); setNewKeyConfirm('') }}
-                  style={{ background: 'var(--bg4)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px', color: 'var(--text2)', cursor: 'pointer', fontFamily: 'DM Sans', fontSize: 12, fontWeight: 500, flexShrink: 0 }}
+                  style={{ background: 'var(--bg4)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px', color: 'var(--text2)', cursor: 'pointer', fontFamily: 'Inter Variable', fontSize: 12, fontWeight: 500, flexShrink: 0 }}
                 >
                   {changingKey ? t('settings.cancel') : t('settings.db_change_password')}
                 </button>
@@ -196,20 +209,20 @@ export const SettingsPage: FC<SettingsPageProps> = ({ counters, onImport, onBack
                     placeholder={t('settings.db_new_password')}
                     value={newKey}
                     onChange={e => setNewKey(e.target.value)}
-                    style={{ background: 'var(--bg3)', border: '1px solid var(--border2)', borderRadius: 8, padding: '9px 12px', color: 'var(--text)', fontFamily: 'DM Sans', fontSize: 13, outline: 'none' }}
+                    style={{ background: 'var(--bg3)', border: '1px solid var(--border2)', borderRadius: 8, padding: '9px 12px', color: 'var(--text)', fontFamily: 'Inter Variable', fontSize: 13, outline: 'none' }}
                   />
                   <input
                     type="password"
                     placeholder={t('settings.db_confirm_password')}
                     value={newKeyConfirm}
                     onChange={e => setNewKeyConfirm(e.target.value)}
-                    style={{ background: 'var(--bg3)', border: '1px solid var(--border2)', borderRadius: 8, padding: '9px 12px', color: 'var(--text)', fontFamily: 'DM Sans', fontSize: 13, outline: 'none' }}
+                    style={{ background: 'var(--bg3)', border: '1px solid var(--border2)', borderRadius: 8, padding: '9px 12px', color: 'var(--text)', fontFamily: 'Inter Variable', fontSize: 13, outline: 'none' }}
                   />
                   {keyError && <div style={{ fontSize: 12, color: '#ef4444' }}>{keyError}</div>}
                   <button
                     type="submit"
                     disabled={!newKey || !newKeyConfirm || newKey !== newKeyConfirm}
-                    style={{ background: 'var(--bg4)', border: '1px solid var(--border2)', borderRadius: 8, padding: '9px', color: 'var(--text)', cursor: 'pointer', fontFamily: 'DM Sans', fontSize: 13, fontWeight: 500, opacity: (!newKey || !newKeyConfirm || newKey !== newKeyConfirm) ? 0.4 : 1 }}
+                    style={{ background: 'var(--bg4)', border: '1px solid var(--border2)', borderRadius: 8, padding: '9px', color: 'var(--text)', cursor: 'pointer', fontFamily: 'Inter Variable', fontSize: 13, fontWeight: 500, opacity: (!newKey || !newKeyConfirm || newKey !== newKeyConfirm) ? 0.4 : 1 }}
                   >
                     {t('settings.db_set_password')}
                   </button>
@@ -227,18 +240,18 @@ export const SettingsPage: FC<SettingsPageProps> = ({ counters, onImport, onBack
                 <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                   <button
                     onClick={() => window.electronAPI!.resetConfig()}
-                    style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, padding: '6px 12px', color: '#ef4444', cursor: 'pointer', fontFamily: 'DM Sans', fontSize: 12, fontWeight: 500 }}
+                    style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, padding: '6px 12px', color: '#ef4444', cursor: 'pointer', fontFamily: 'Inter Variable', fontSize: 12, fontWeight: 500 }}
                   >
                     {t('settings.db_confirm_reset')}
                   </button>
-                  <button onClick={() => setConfirmReset(false)} style={{ background: 'var(--bg4)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px', color: 'var(--text2)', cursor: 'pointer', fontFamily: 'DM Sans', fontSize: 12, fontWeight: 500 }}>
+                  <button onClick={() => setConfirmReset(false)} style={{ background: 'var(--bg4)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px', color: 'var(--text2)', cursor: 'pointer', fontFamily: 'Inter Variable', fontSize: 12, fontWeight: 500 }}>
                     {t('settings.cancel')}
                   </button>
                 </div>
               ) : (
                 <button
                   onClick={() => setConfirmReset(true)}
-                  style={{ background: 'var(--bg4)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px', color: 'var(--text3)', cursor: 'pointer', fontFamily: 'DM Sans', fontSize: 12, fontWeight: 500, flexShrink: 0 }}
+                  style={{ background: 'var(--bg4)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px', color: 'var(--text3)', cursor: 'pointer', fontFamily: 'Inter Variable', fontSize: 12, fontWeight: 500, flexShrink: 0 }}
                 >
                   {t('settings.db_reset_btn')}
                 </button>
@@ -294,7 +307,7 @@ export const SettingsPage: FC<SettingsPageProps> = ({ counters, onImport, onBack
                     background: 'var(--bg4)', border: '1px solid var(--border)',
                     borderRadius: 9, padding: '7px 14px',
                     color: 'var(--text2)', cursor: 'pointer',
-                    fontFamily: 'DM Sans', fontSize: 13, fontWeight: 500,
+                    fontFamily: 'Inter Variable', fontSize: 13, fontWeight: 500,
                     display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.15s'
                   }}
                   onMouseEnter={e => { e.currentTarget.style.color = 'var(--text)'; e.currentTarget.style.borderColor = 'var(--text3)' }}
@@ -314,7 +327,7 @@ export const SettingsPage: FC<SettingsPageProps> = ({ counters, onImport, onBack
                     padding: '7px 14px',
                     color: counter.color,
                     cursor: 'pointer',
-                    fontFamily: 'DM Sans',
+                    fontFamily: 'Inter Variable',
                     fontSize: 13,
                     fontWeight: 500,
                     display: 'flex',
@@ -343,14 +356,14 @@ export const SettingsPage: FC<SettingsPageProps> = ({ counters, onImport, onBack
 
         <div style={{ marginTop: 32, padding: '16px 20px', background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-            <div style={{ fontFamily: 'Outfit', fontSize: 14, fontWeight: 600 }}>{t('settings.csv_format')}</div>
+            <div style={{ fontFamily: 'Outfit Variable', fontSize: 14, fontWeight: 600 }}>{t('settings.csv_format')}</div>
             <button
               onClick={handleDownloadTemplate}
               style={{
                 background: 'var(--bg4)', border: '1px solid var(--border)',
                 borderRadius: 8, padding: '5px 12px',
                 color: 'var(--text2)', cursor: 'pointer',
-                fontFamily: 'DM Sans', fontSize: 12, fontWeight: 500,
+                fontFamily: 'Inter Variable', fontSize: 12, fontWeight: 500,
                 display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.15s'
               }}
               onMouseEnter={e => { e.currentTarget.style.color = 'var(--text)'; e.currentTarget.style.borderColor = 'var(--text3)' }}

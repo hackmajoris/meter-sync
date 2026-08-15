@@ -45,7 +45,7 @@ export const ExpandedChart: FC<ExpandedChartProps> = ({
       <div className="chart-expanded-inner">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <div>
-            <div style={{ fontFamily: 'Outfit', fontSize: 22, fontWeight: 600 }}>{counter.name}</div>
+            <div style={{ fontFamily: 'Outfit Variable', fontSize: 22, fontWeight: 600 }}>{counter.name}</div>
             <div style={{ color: 'var(--text2)', fontSize: 13, marginTop: 2 }}>{t('chart.full_history')}</div>
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
@@ -54,7 +54,7 @@ export const ExpandedChart: FC<ExpandedChartProps> = ({
             <ChartTypeToggle type={chartType} onToggle={onToggleType} color={counter.color} />
             <button onClick={onClose} style={{
               background: 'var(--bg4)', border: 'none', borderRadius: 10, padding: '8px 14px',
-              color: 'var(--text2)', cursor: 'pointer', fontFamily: 'DM Sans', fontSize: 13,
+              color: 'var(--text2)', cursor: 'pointer', fontFamily: 'Inter Variable', fontSize: 13,
               display: 'flex', alignItems: 'center', gap: 6
             }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>

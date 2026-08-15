@@ -25,7 +25,7 @@ export const LanguageSwitcher: FC = () => {
             padding: '6px 10px',
             color: i18n.language === code ? 'var(--text)' : 'var(--text2)',
             cursor: 'pointer',
-            fontFamily: 'DM Sans',
+            fontFamily: 'Inter Variable',
             fontSize: 12,
             fontWeight: 500,
             display: 'flex',

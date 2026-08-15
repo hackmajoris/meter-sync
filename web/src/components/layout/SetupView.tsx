@@ -51,7 +51,7 @@ export const SetupView: FC = () => {
     <div style={{
       height: '100vh', background: 'var(--bg)', display: 'flex',
       alignItems: 'center', justifyContent: 'center',
-      fontFamily: 'DM Sans',
+      fontFamily: 'Inter Variable',
     }}>
       <div style={{
         width: 420, background: 'var(--bg2)',
@@ -59,7 +59,7 @@ export const SetupView: FC = () => {
         padding: 32, boxShadow: '0 40px 80px rgba(0,0,0,0.6)',
       }}>
         <div style={{ marginBottom: 24 }}>
-          <div style={{ fontFamily: 'Outfit', fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 6 }}>
+          <div style={{ fontFamily: 'Outfit Variable', fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 6 }}>
             Welcome to MeterSync
           </div>
           <div style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.5 }}>
@@ -78,7 +78,7 @@ export const SetupView: FC = () => {
               onClick={() => { setMode(m); setError(null) }}
               style={{
                 flex: 1, padding: '7px 0', border: 'none', borderRadius: 8,
-                fontFamily: 'DM Sans', fontSize: 13, fontWeight: 500, cursor: 'pointer',
+                fontFamily: 'Inter Variable', fontSize: 13, fontWeight: 500, cursor: 'pointer',
                 background: mode === m ? 'var(--bg4)' : 'transparent',
                 color: mode === m ? 'var(--text)' : 'var(--text3)',
                 transition: 'all 0.15s',
@@ -99,7 +99,7 @@ export const SetupView: FC = () => {
                     readOnly
                     value={folder}
                     placeholder="Choose a folder…"
-                    style={{ flex: 1, background: 'var(--bg3)', border: '1px solid var(--border2)', borderRadius: 10, padding: '10px 14px', color: folder ? 'var(--text)' : 'var(--text3)', fontFamily: 'DM Sans', fontSize: 13, outline: 'none' }}
+                    style={{ flex: 1, background: 'var(--bg3)', border: '1px solid var(--border2)', borderRadius: 10, padding: '10px 14px', color: folder ? 'var(--text)' : 'var(--text3)', fontFamily: 'Inter Variable', fontSize: 13, outline: 'none' }}
                   />
                   <button type="button" onClick={pickFolder} style={btnSecondary}>Browse</button>
                 </div>
@@ -148,7 +148,7 @@ export const SetupView: FC = () => {
                     readOnly
                     value={dbPath}
                     placeholder="Select an existing database…"
-                    style={{ flex: 1, background: 'var(--bg3)', border: '1px solid var(--border2)', borderRadius: 10, padding: '10px 14px', color: dbPath ? 'var(--text)' : 'var(--text3)', fontFamily: 'DM Sans', fontSize: 13, outline: 'none' }}
+                    style={{ flex: 1, background: 'var(--bg3)', border: '1px solid var(--border2)', borderRadius: 10, padding: '10px 14px', color: dbPath ? 'var(--text)' : 'var(--text3)', fontFamily: 'Inter Variable', fontSize: 13, outline: 'none' }}
                   />
                   <button type="button" onClick={pickFile} style={btnSecondary}>Browse</button>
                 </div>
@@ -189,6 +189,6 @@ const btnSecondary: React.CSSProperties = {
   background: 'var(--bg4)', border: '1px solid var(--border)',
   borderRadius: 10, padding: '10px 14px',
   color: 'var(--text2)', cursor: 'pointer',
-  fontFamily: 'DM Sans', fontSize: 13, fontWeight: 500,
+  fontFamily: 'Inter Variable', fontSize: 13, fontWeight: 500,
   whiteSpace: 'nowrap', flexShrink: 0,
 }

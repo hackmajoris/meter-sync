@@ -10,6 +10,7 @@ import { AddEntryModal } from './components/modals/AddEntryModal'
 import { ExpandedChart } from './components/charts/ExpandedChart'
 import type { ChartRange } from './components/charts/RangeToggle'
 import type { Theme } from './components/common/ThemeSwitcher'
+import { SCALE_ZOOM, type Scale } from './components/common/ScaleSwitcher'
 
 type AppState = 'checking' | 'setup' | 'ready'
 
@@ -28,7 +29,7 @@ export default function App() {
   if (appState === 'checking') {
     return (
       <div style={{ height: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ fontFamily: 'DM Sans', fontSize: 14, color: 'var(--text2)' }}>Loading…</div>
+        <div style={{ fontFamily: 'Inter Variable', fontSize: 14, color: 'var(--text2)' }}>Loading…</div>
       </div>
     )
   }
@@ -60,6 +61,7 @@ function MainApp() {
   const [groupBy, setGroupBy] = useState<'day' | 'month' | 'year'>('day')
   const [range, setRange] = useState<ChartRange>('1y')
   const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem('theme') as Theme) || 'dark')
+  const [scale, setScale] = useState<Scale>(() => (localStorage.getItem('scale') as Scale) || 'md')
   const [showAvg, setShowAvg] = useState(false)
   const [showTrend, setShowTrend] = useState(false)
   const [view, setView] = useState<'dashboard' | 'settings'>('dashboard')
@@ -78,6 +80,12 @@ function MainApp() {
     document.documentElement.dataset.theme = theme
     localStorage.setItem('theme', theme)
   }, [theme])
+
+  useEffect(() => {
+    // CSS reads --zoom to scale content and compensate height (see index.css).
+    document.documentElement.style.setProperty('--zoom', String(SCALE_ZOOM[scale]))
+    localStorage.setItem('scale', scale)
+  }, [scale])
 
   // Set initial selected counter and house ID when data loads
   useEffect(() => {
@@ -146,7 +154,7 @@ function MainApp() {
   if (loading) {
     return (
       <div style={{ height: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ fontFamily: 'DM Sans', fontSize: 14, color: 'var(--text2)' }}>Loading...</div>
+        <div style={{ fontFamily: 'Inter Variable', fontSize: 14, color: 'var(--text2)' }}>Loading...</div>
       </div>
     )
   }
@@ -155,14 +163,14 @@ function MainApp() {
   if (error) {
     return (
       <div style={{ height: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ fontFamily: 'DM Sans', fontSize: 14, color: '#ef4444' }}>Error: {error}</div>
+        <div style={{ fontFamily: 'Inter Variable', fontSize: 14, color: '#ef4444' }}>Error: {error}</div>
       </div>
     )
   }
 
   return (
-    <div style={{ height: '100vh', background: 'var(--bg)', display: 'flex', justifyContent: 'center' }}>
-      <div style={{ display: 'flex', width: '100%', maxWidth: 1440, height: '100vh', overflow: 'hidden', position: 'relative' }}>
+    <div style={{ height: '100%', background: 'var(--bg)', display: 'flex', justifyContent: 'center' }}>
+      <div style={{ display: 'flex', width: '100%', maxWidth: 1440, height: '100%', overflow: 'hidden', position: 'relative' }}>
         {/* Mobile sidebar overlay */}
         {isMobile && sidebarOpen && (
           <div
@@ -199,6 +207,8 @@ function MainApp() {
               onBack={() => setView('dashboard')}
               theme={theme}
               onToggleTheme={setTheme}
+              scale={scale}
+              onToggleScale={setScale}
             />
           ) : (
             <DashboardPage

@@ -17,7 +17,7 @@ export const ChartTypeToggle: FC<ChartTypeToggleProps> = ({ type, onToggle, colo
           border: type === chartType ? `1px solid ${color}55` : '1px solid transparent',
           borderRadius: 7, padding: '5px 12px',
           color: type === chartType ? color : 'var(--text2)',
-          cursor: 'pointer', fontFamily: 'DM Sans', fontSize: 12, fontWeight: 500,
+          cursor: 'pointer', fontFamily: 'Inter Variable', fontSize: 12, fontWeight: 500,
           transition: 'all 0.15s'
         }}>
           {chartType === 'line' ? (

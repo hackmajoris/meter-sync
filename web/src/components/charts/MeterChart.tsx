@@ -197,12 +197,12 @@ export const MeterChart: FC<MeterChartProps> = ({
       x: {
         grid: { color: gridColor },
         border: { display: false },
-        ticks: { color: tickColor, font: { family: 'DM Sans', size: 11 }, maxTicksLimit: expanded ? 15 : 8, maxRotation: 0 }
+        ticks: { color: tickColor, font: { family: 'Inter Variable', size: 11 }, maxTicksLimit: expanded ? 15 : 8, maxRotation: 0 }
       },
       y: {
         grid: { color: gridColor },
         border: { display: false },
-        ticks: { color: tickColor, font: { family: 'DM Sans', size: 11 }, callback: (v: any) => `${v} ${counter.unit}` }
+        ticks: { color: tickColor, font: { family: 'Inter Variable', size: 11 }, callback: (v: any) => `${v} ${counter.unit}` }
       }
     }
   }

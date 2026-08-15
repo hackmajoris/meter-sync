@@ -117,7 +117,7 @@ export const DashboardPage: FC<DashboardPageProps> = ({
           </button>
         )}
         <div style={{ fontSize: 40 }}>{hasHouses ? '⚡' : '🏠'}</div>
-        <div style={{ fontFamily: 'Outfit', fontSize: 18, fontWeight: 600 }}>
+        <div style={{ fontFamily: 'Outfit Variable', fontSize: 18, fontWeight: 600 }}>
           {hasHouses ? t('counter.no_counters') : t('house.no_houses')}
         </div>
         <div style={{ color: 'var(--text2)', fontSize: 14 }}>
@@ -125,7 +125,7 @@ export const DashboardPage: FC<DashboardPageProps> = ({
         </div>
         <button
           onClick={hasHouses ? onAddCounter : onAddHouse}
-          style={{ marginTop: 8, background: '#3b82f6', border: 'none', borderRadius: 12, padding: '10px 22px', color: '#fff', cursor: 'pointer', fontFamily: 'DM Sans', fontSize: 14, fontWeight: 500 }}
+          style={{ marginTop: 8, background: '#3b82f6', border: 'none', borderRadius: 12, padding: '10px 22px', color: '#fff', cursor: 'pointer', fontFamily: 'Inter Variable', fontSize: 14, fontWeight: 500 }}
         >
           {hasHouses ? t('counter.add') : t('house.add')}
         </button>
@@ -157,7 +157,7 @@ export const DashboardPage: FC<DashboardPageProps> = ({
             {getCounterIcon(counter.name, counter.color)}
           </div>
           <div>
-            <div style={{ fontFamily: 'Outfit', fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em' }}>{counter.name}</div>
+            <div style={{ fontFamily: 'Outfit Variable', fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em' }}>{counter.name}</div>
             <div style={{ color: 'var(--text3)', fontSize: 12, marginTop: 1 }}>{counter.entries.length} entries</div>
           </div>
         </div>
@@ -175,7 +175,7 @@ export const DashboardPage: FC<DashboardPageProps> = ({
             style={{
               background: counter.color, border: 'none', borderRadius: 10,
               padding: '8px 16px', color: '#fff', cursor: 'pointer',
-              fontFamily: 'DM Sans', fontSize: 13, fontWeight: 500,
+              fontFamily: 'Inter Variable', fontSize: 13, fontWeight: 500,
               display: 'flex', alignItems: 'center', gap: 6,
               boxShadow: `0 4px 16px ${counter.color}44`,
               transition: 'opacity 0.15s'
@@ -210,7 +210,7 @@ export const DashboardPage: FC<DashboardPageProps> = ({
         <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 18, padding: '20px 22px', marginBottom: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <div>
-              <div style={{ fontFamily: 'Outfit', fontSize: 15, fontWeight: 600 }}>{t('chart.usage_over_time')}</div>
+              <div style={{ fontFamily: 'Outfit Variable', fontSize: 15, fontWeight: 600 }}>{t('chart.usage_over_time')}</div>
               <div style={{ color: 'var(--text3)', fontSize: 12, marginTop: 2 }}>{t('chart.last_entries', { count: counter.entries.length })}</div>
             </div>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -223,7 +223,7 @@ export const DashboardPage: FC<DashboardPageProps> = ({
                   background: 'var(--bg4)', border: 'none', borderRadius: 9,
                   padding: '7px 10px', cursor: 'pointer', color: 'var(--text2)',
                   display: 'flex', alignItems: 'center', gap: 5,
-                  fontFamily: 'DM Sans', fontSize: 12,
+                  fontFamily: 'Inter Variable', fontSize: 12,
                   transition: 'background 0.15s, color 0.15s'
                 }}
                 onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg3)'; e.currentTarget.style.color = 'var(--text)' }}
@@ -247,7 +247,7 @@ export const DashboardPage: FC<DashboardPageProps> = ({
 
         <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 18, overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: 500 }}>
           <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-            <div style={{ fontFamily: 'Outfit', fontSize: 15, fontWeight: 600 }}>{t('entries.title')}</div>
+            <div style={{ fontFamily: 'Outfit Variable', fontSize: 15, fontWeight: 600 }}>{t('entries.title')}</div>
             <div style={{ fontSize: 12, color: 'var(--text3)' }}>{t('entries.records', { count: sortedEntries.length })}</div>
           </div>
           {sortedEntries.length === 0 ? (
@@ -282,7 +282,7 @@ export const DashboardPage: FC<DashboardPageProps> = ({
                         {new Date(entry.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
                       </td>
                       <td style={{ padding: '12px 20px', textAlign: 'right' }}>
-                        <span style={{ fontFamily: 'Outfit', fontWeight: 600, fontSize: 15, color: counter.color }}>{entry.value}</span>
+                        <span style={{ fontFamily: 'Outfit Variable', fontWeight: 600, fontSize: 15, color: counter.color }}>{entry.value}</span>
                         <span style={{ color: 'var(--text3)', fontSize: 12, marginLeft: 4 }}>{counter.unit}</span>
                       </td>
                       <td style={{ padding: '12px 20px', fontSize: 12, color: 'var(--text3)' }}>{entry.note || '—'}</td>

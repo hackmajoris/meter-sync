@@ -26,7 +26,7 @@ export const ThemeSwitcher: FC<ThemeSwitcherProps> = ({ theme, onChange }) => {
             padding: '6px 10px',
             color: theme === value ? 'var(--text)' : 'var(--text2)',
             cursor: 'pointer',
-            fontFamily: 'DM Sans',
+            fontFamily: 'Inter Variable',
             fontSize: 12,
             fontWeight: 500,
             display: 'flex',
