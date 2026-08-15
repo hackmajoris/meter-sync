@@ -1,4 +1,4 @@
-.PHONY: build server-build dev test lint fmt clean generate seed seed-electron web-dev web-build electron-dev electron-build
+.PHONY: build server-build dev test lint fmt clean generate seed seed-electron web-dev web-build electron-dev electron-build demo-dev site-build site-serve
 
 APP := server
 BIN := .bin/$(APP)
@@ -49,7 +49,7 @@ fmt:
 	goimports -w .
 
 clean:
-	rm -rf .bin/ pkg/web/dist/ electron/dist/
+	rm -rf .bin/ pkg/web/dist/ electron/dist/ site/demo/
 
 generate:
 	go generate ./...
@@ -59,6 +59,18 @@ web-dev:
 
 web-build:
 	cd web && npm ci && npm run build
+
+# Run the web app against the in-memory mock API, no backend needed.
+demo-dev:
+	cd web && VITE_DEMO=true npm run dev
+
+# Build the demo into site/demo/ and serve the landing page locally.
+site-build:
+	cd web && npm run build:demo
+
+site-serve: site-build
+	@echo "landing: http://localhost:8199/  demo: http://localhost:8199/demo/"
+	cd site && python3 -m http.server 8199
 
 electron-dev: web-build server-build
 	cd electron && npm run dev

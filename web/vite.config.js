@@ -5,6 +5,9 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   base: './',
+  define: {
+    'import.meta.env.VITE_DEMO': JSON.stringify(process.env.VITE_DEMO === 'true'),
+  },
   build: {
     outDir: '../pkg/web/dist',
     emptyOutDir: true,
