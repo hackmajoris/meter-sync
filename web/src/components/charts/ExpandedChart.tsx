@@ -5,6 +5,7 @@ import { MeterChart } from './MeterChart'
 import { ChartTypeToggle } from './ChartTypeToggle'
 import { GroupByToggle } from './GroupByToggle'
 import { RangeToggle, type ChartRange } from './RangeToggle'
+import type { Theme } from '../common/ThemeSwitcher'
 import { OverlayToggles } from './OverlayToggles'
 
 export interface ExpandedChartProps {
@@ -16,6 +17,7 @@ export interface ExpandedChartProps {
   onToggleGroupBy: (groupBy: 'day' | 'month' | 'year') => void
   range: ChartRange
   onToggleRange: (range: ChartRange) => void
+  theme: Theme
   showAvg: boolean
   showTrend: boolean
   onToggleAvg: () => void
@@ -31,6 +33,7 @@ export const ExpandedChart: FC<ExpandedChartProps> = ({
   onToggleGroupBy,
   range,
   onToggleRange,
+  theme,
   showAvg,
   showTrend, 
   onToggleAvg, 
@@ -63,7 +66,7 @@ export const ExpandedChart: FC<ExpandedChartProps> = ({
           <OverlayToggles showAvg={showAvg} showTrend={showTrend} onToggleAvg={onToggleAvg} onToggleTrend={onToggleTrend} />
         </div>
         <div style={{ height: 460 }}>
-          <MeterChart counter={counter} chartType={chartType} expanded={true} groupBy={groupBy} range={range} showAvg={showAvg} showTrend={showTrend} />
+          <MeterChart counter={counter} chartType={chartType} expanded={true} groupBy={groupBy} range={range} theme={theme} showAvg={showAvg} showTrend={showTrend} />
         </div>
       </div>
     </div>

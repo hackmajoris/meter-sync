@@ -13,6 +13,7 @@ import {
 import { Line, Bar } from 'react-chartjs-2'
 import type { CounterWithEntries } from '../../hooks/useAppData'
 import type { ChartRange } from './RangeToggle'
+import type { Theme } from '../common/ThemeSwitcher'
 import { polyfit } from '../../utils/helpers'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Filler, Tooltip)
@@ -23,6 +24,7 @@ export interface MeterChartProps {
   expanded: boolean
   groupBy?: 'day' | 'month' | 'year'
   range?: ChartRange
+  theme?: Theme
   showAvg?: boolean
   showTrend?: boolean
 }
@@ -33,6 +35,7 @@ export const MeterChart: FC<MeterChartProps> = ({
   expanded,
   groupBy = 'day',
   range = '1y',
+  theme = 'dark',
   showAvg = false,
   showTrend = false
 }) => {
@@ -97,6 +100,9 @@ export const MeterChart: FC<MeterChartProps> = ({
   }, [values, showTrend])
 
   const color = counter.color
+  const isLight = theme === 'light'
+  const gridColor = isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.04)'
+  const tickColor = isLight ? '#8a8a9c' : '#5a5a72'
 
   const overlayDatasets = []
   if (avgValues) overlayDatasets.push({
@@ -189,14 +195,14 @@ export const MeterChart: FC<MeterChartProps> = ({
     },
     scales: {
       x: {
-        grid: { color: 'rgba(255,255,255,0.04)' },
+        grid: { color: gridColor },
         border: { display: false },
-        ticks: { color: '#5a5a72', font: { family: 'DM Sans', size: 11 }, maxTicksLimit: expanded ? 15 : 8, maxRotation: 0 }
+        ticks: { color: tickColor, font: { family: 'DM Sans', size: 11 }, maxTicksLimit: expanded ? 15 : 8, maxRotation: 0 }
       },
       y: {
-        grid: { color: 'rgba(255,255,255,0.04)' },
+        grid: { color: gridColor },
         border: { display: false },
-        ticks: { color: '#5a5a72', font: { family: 'DM Sans', size: 11 }, callback: (v: any) => `${v} ${counter.unit}` }
+        ticks: { color: tickColor, font: { family: 'DM Sans', size: 11 }, callback: (v: any) => `${v} ${counter.unit}` }
       }
     }
   }

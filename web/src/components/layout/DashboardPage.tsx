@@ -7,6 +7,7 @@ import { MeterChart } from '../charts/MeterChart'
 import { ChartTypeToggle } from '../charts/ChartTypeToggle'
 import { GroupByToggle } from '../charts/GroupByToggle'
 import { RangeToggle, type ChartRange } from '../charts/RangeToggle'
+import type { Theme } from '../common/ThemeSwitcher'
 import { OverlayToggles } from '../charts/OverlayToggles'
 
 export interface DashboardPageProps {
@@ -17,6 +18,7 @@ export interface DashboardPageProps {
   onToggleGroupBy: (groupBy: 'day' | 'month' | 'year') => void
   range: ChartRange
   onToggleRange: (range: ChartRange) => void
+  theme: Theme
   showAvg: boolean
   showTrend: boolean
   onToggleAvg: () => void
@@ -40,6 +42,7 @@ export const DashboardPage: FC<DashboardPageProps> = ({
   onToggleGroupBy,
   range,
   onToggleRange,
+  theme,
   showAvg,
   showTrend,
   onToggleAvg,
@@ -236,7 +239,7 @@ export const DashboardPage: FC<DashboardPageProps> = ({
           </div>
           <div style={{ height: 200 }}>
             {counter.entries.length > 0
-              ? <MeterChart counter={counter} chartType={chartType} expanded={false} groupBy={groupBy} range={range} showAvg={showAvg} showTrend={showTrend} />
+              ? <MeterChart counter={counter} chartType={chartType} expanded={false} groupBy={groupBy} range={range} theme={theme} showAvg={showAvg} showTrend={showTrend} />
               : <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text3)', fontSize: 13 }}>{t('entry.no_data')}</div>
             }
           </div>

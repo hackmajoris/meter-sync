@@ -4,6 +4,7 @@ import type { CounterWithEntries } from '../../hooks/useAppData'
 import { parseCSV, downloadFile } from '../../utils/helpers'
 import { getCounterIcon } from '../icons/CounterIcons'
 import { LanguageSwitcher } from '../common/LanguageSwitcher'
+import { ThemeSwitcher, type Theme } from '../common/ThemeSwitcher'
 
 const isElectron = !!window.electronAPI
 
@@ -11,9 +12,11 @@ export interface SettingsPageProps {
   counters: CounterWithEntries[]
   onImport: (counterId: string, entries: Array<{ date: string; value: number; note?: string }>) => Promise<{ created: number; skipped: number }>
   onBack: () => void
+  theme: Theme
+  onToggleTheme: (theme: Theme) => void
 }
 
-export const SettingsPage: FC<SettingsPageProps> = ({ counters, onImport, onBack }) => {
+export const SettingsPage: FC<SettingsPageProps> = ({ counters, onImport, onBack, theme, onToggleTheme }) => {
   const { t } = useTranslation()
   const [importFeedback, setImportFeedback] = useState<Record<string, string>>({})
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -143,6 +146,16 @@ export const SettingsPage: FC<SettingsPageProps> = ({ counters, onImport, onBack
             </div>
           </div>
           <LanguageSwitcher />
+        </div>
+
+        <div style={{ marginBottom: 32, padding: '16px 20px', background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <div>
+              <div style={{ fontFamily: 'Outfit', fontSize: 14, fontWeight: 600 }}>{t('settings.theme')}</div>
+              <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>{t('settings.theme_subtitle')}</div>
+            </div>
+          </div>
+          <ThemeSwitcher theme={theme} onChange={onToggleTheme} />
         </div>
 
         {/* Database section — Electron only */}

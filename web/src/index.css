@@ -13,6 +13,18 @@
   --sidebar-w: 240px;
 }
 
+:root[data-theme="light"] {
+  --bg: #f6f6fa;
+  --bg2: #ffffff;
+  --bg3: #f0f0f5;
+  --bg4: #e6e6ee;
+  --border: rgba(0,0,0,0.09);
+  --border2: rgba(0,0,0,0.15);
+  --text: #1a1a24;
+  --text2: #55556a;
+  --text3: #8a8a9c;
+}
+
 html, body, #root {
   height: 100%;
   background: var(--bg);

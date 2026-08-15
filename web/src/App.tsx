@@ -9,6 +9,7 @@ import { AddHouseModal } from './components/modals/AddHouseModal'
 import { AddEntryModal } from './components/modals/AddEntryModal'
 import { ExpandedChart } from './components/charts/ExpandedChart'
 import type { ChartRange } from './components/charts/RangeToggle'
+import type { Theme } from './components/common/ThemeSwitcher'
 
 type AppState = 'checking' | 'setup' | 'ready'
 
@@ -58,6 +59,7 @@ function MainApp() {
   const [chartType, setChartType] = useState<'line' | 'bar'>('line')
   const [groupBy, setGroupBy] = useState<'day' | 'month' | 'year'>('day')
   const [range, setRange] = useState<ChartRange>('1y')
+  const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem('theme') as Theme) || 'dark')
   const [showAvg, setShowAvg] = useState(false)
   const [showTrend, setShowTrend] = useState(false)
   const [view, setView] = useState<'dashboard' | 'settings'>('dashboard')
@@ -71,6 +73,11 @@ function MainApp() {
   const [showAddEntry, setShowAddEntry] = useState(false)
   const [showExpandedChart, setShowExpandedChart] = useState(false)
   const [addingToHouseId, setAddingToHouseId] = useState<string>('')
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme
+    localStorage.setItem('theme', theme)
+  }, [theme])
 
   // Set initial selected counter and house ID when data loads
   useEffect(() => {
@@ -186,10 +193,12 @@ function MainApp() {
         {/* Main */}
         <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--bg)' }}>
           {view === 'settings' ? (
-            <SettingsPage 
-              counters={counters} 
-              onImport={importEntries} 
-              onBack={() => setView('dashboard')} 
+            <SettingsPage
+              counters={counters}
+              onImport={importEntries}
+              onBack={() => setView('dashboard')}
+              theme={theme}
+              onToggleTheme={setTheme}
             />
           ) : (
             <DashboardPage
@@ -200,6 +209,7 @@ function MainApp() {
               onToggleGroupBy={setGroupBy}
               range={range}
               onToggleRange={setRange}
+              theme={theme}
               showAvg={showAvg}
               showTrend={showTrend}
               onToggleAvg={() => setShowAvg(v => !v)}
@@ -249,6 +259,7 @@ function MainApp() {
             onToggleGroupBy={setGroupBy}
             range={range}
             onToggleRange={setRange}
+            theme={theme}
             showAvg={showAvg}
             showTrend={showTrend} 
             onToggleAvg={() => setShowAvg(v => !v)} 
