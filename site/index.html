@@ -948,7 +948,7 @@
                 {
                     accentColor: "#06b6d4",
                     title: "Rich charts",
-                    desc: "Line and bar charts with daily & monthly views, expandable fullscreen mode, average line, and trend overlay.",
+                    desc: "Line and bar charts grouped by day, month, or year, over the current year, 3 years, 5 years, or all data — with fullscreen mode, average line, and trend overlay.",
                     icon: (c) => (
                         <svg
                             width="20"
@@ -1033,7 +1033,7 @@
                 {
                     accentColor: "#ec4899",
                     title: "Stat summaries",
-                    desc: "See today vs yesterday, daily average, total, peak, and lowest — all computed automatically from your entries.",
+                    desc: "Today vs yesterday, daily average, month total, year total, month peak and lowest — computed automatically, and each card can be hidden.",
                     icon: (c) => (
                         <svg
                             width="20"
@@ -1047,6 +1047,51 @@
                             <line x1="18" y1="20" x2="18" y2="10" />
                             <line x1="12" y1="20" x2="12" y2="4" />
                             <line x1="6" y1="20" x2="6" y2="14" />
+                        </svg>
+                    ),
+                },
+                {
+                    accentColor: "#6366f1",
+                    title: "Month-over-month comparison",
+                    desc: "This month against last month, and today against yesterday — each with the absolute change and the percentage.",
+                    icon: (c) => (
+                        <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke={c}
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                        >
+                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+                            <polyline points="17 6 23 6 23 12" />
+                        </svg>
+                    ),
+                },
+                {
+                    accentColor: "#14b8a6",
+                    title: "Themes & text size",
+                    desc: "Light or dark appearance and three interface sizes. Your preferences are saved in the database, so they survive a restart.",
+                    icon: (c) => (
+                        <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke={c}
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                        >
+                            <line x1="4" y1="21" x2="4" y2="14" />
+                            <line x1="4" y1="10" x2="4" y2="3" />
+                            <line x1="12" y1="21" x2="12" y2="12" />
+                            <line x1="12" y1="8" x2="12" y2="3" />
+                            <line x1="20" y1="21" x2="20" y2="16" />
+                            <line x1="20" y1="12" x2="20" y2="3" />
+                            <line x1="1" y1="14" x2="7" y2="14" />
+                            <line x1="9" y1="8" x2="15" y2="8" />
+                            <line x1="17" y1="16" x2="23" y2="16" />
                         </svg>
                     ),
                 },

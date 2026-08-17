@@ -4,6 +4,18 @@ Track utility meter readings across multiple properties. Log readings for water,
 
 Built as a Go + React SPA with an optional Electron desktop wrapper and an encrypted SQLite database.
 
+## Features
+
+- **Multiple houses and counters** — group any number of counters (electricity, gas, water, custom) per property, each with its own unit and colour.
+- **Charts** — line and bar charts grouped by day, month, or year, over a range of the current year, 3 years, 5 years, or all data. Expandable fullscreen mode with average and trend overlays.
+- **Dashboard stats** — Today vs Yesterday, Average / day, Month Total, Year Total, Month Peak, and Month Lowest, computed from your entries. Each card can be hidden from the Settings page.
+- **Comparison card** — this month vs last month and today vs yesterday, with absolute and percentage deltas.
+- **Light and dark themes** plus three interface text sizes (small, medium, large).
+- **Persisted preferences** — theme, text size, and stat card visibility are stored in the database, so they survive an app restart even when Electron serves the UI on a new port.
+- **CSV import & export** per counter.
+- **Encrypted local database** — AES-256 SQLite via `go-sqlcipher`. No cloud, no accounts, no telemetry.
+- **Offline-ready fonts** — Inter and Outfit are bundled, so the UI makes no external requests at runtime.
+
 ## Prerequisites
 
 - Go 1.25+
