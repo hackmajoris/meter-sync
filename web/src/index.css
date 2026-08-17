@@ -51,6 +51,29 @@ html, body, #root {
 
 .stats-row::-webkit-scrollbar { display: none; }
 
+/* Chart header: title beside the controls, stacked once space runs out. */
+.chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+@media (max-width: 700px) {
+  .chart-header { flex-direction: column; align-items: stretch; }
+}
+
+/* Chart controls stay on one line and scroll sideways instead of wrapping. */
+.chart-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.chart-controls::-webkit-scrollbar { display: none; }
+.chart-controls > * { flex: 0 0 auto; }
+
 .modal-overlay {
   position: fixed; inset: 0; z-index: 100;
   background: rgba(0,0,0,0.7);

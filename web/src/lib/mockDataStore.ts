@@ -4,6 +4,7 @@
  */
 
 import type { House, Counter, Entry } from './api'
+import { localDate } from '../utils/helpers'
 
 // Helper to generate sample entries with realistic seasonal patterns
 function genSampleEntries(baseVal: number, variance: number, daysBack = 365): Entry[] {
@@ -19,7 +20,7 @@ function genSampleEntries(baseVal: number, variance: number, daysBack = 365): En
     const val = +(baseVal * seasonal + (Math.random() - 0.5) * variance * 2).toFixed(2)
     entries.push({
       id: crypto.randomUUID(),
-      date: d.toISOString().split('T')[0],
+      date: localDate(d),
       value: Math.max(0, val),
       note: ''
     })

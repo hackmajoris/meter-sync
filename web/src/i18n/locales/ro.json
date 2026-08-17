@@ -44,6 +44,16 @@
     "peak": "Vârf lună",
     "lowest": "Minim lună"
   },
+  "comparison": {
+    "title": "Comparație",
+    "month": "Luna aceasta",
+    "day": "Astăzi",
+    "prev_month": "luna trecută",
+    "yesterday": "ieri",
+    "vs_prev_month": "față de luna trecută",
+    "vs_yesterday": "față de ieri",
+    "no_data": "Încă nu există date"
+  },
   "chart": {
     "line": "Linie",
     "bar": "Bare",
@@ -84,6 +94,8 @@
     "theme_light": "Luminos",
     "scale": "Dimensiune text",
     "scale_subtitle": "Ajustează dimensiunea generală a interfeței",
+    "stats": "Statistici tablou de bord",
+    "stats_subtitle": "Alege ce carduri de statistici apar pe tabloul de bord",
     "scale_sm": "Mic",
     "scale_md": "Mediu",
     "scale_lg": "Mare",

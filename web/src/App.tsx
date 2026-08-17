@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import api from './lib'
 import { useAppData } from './hooks/useAppData'
 import { Sidebar } from './components/layout/Sidebar'
 import { DashboardPage } from './components/layout/DashboardPage'
@@ -11,6 +12,7 @@ import { ExpandedChart } from './components/charts/ExpandedChart'
 import type { ChartRange } from './components/charts/RangeToggle'
 import type { Theme } from './components/common/ThemeSwitcher'
 import { SCALE_ZOOM, type Scale } from './components/common/ScaleSwitcher'
+import { loadVisibleStats, saveVisibleStats, parseVisibleStats, type StatKey } from './utils/statCards'
 
 type AppState = 'checking' | 'setup' | 'ready'
 
@@ -62,6 +64,7 @@ function MainApp() {
   const [range, setRange] = useState<ChartRange>('1y')
   const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem('theme') as Theme) || 'dark')
   const [scale, setScale] = useState<Scale>(() => (localStorage.getItem('scale') as Scale) || 'md')
+  const [visibleStats, setVisibleStats] = useState(loadVisibleStats)
   const [showAvg, setShowAvg] = useState(false)
   const [showTrend, setShowTrend] = useState(false)
   const [view, setView] = useState<'dashboard' | 'settings'>('dashboard')
@@ -76,6 +79,34 @@ function MainApp() {
   const [showExpandedChart, setShowExpandedChart] = useState(false)
   const [addingToHouseId, setAddingToHouseId] = useState<string>('')
 
+  // Preferences live in the database: the Electron shell starts the backend on a
+  // random port, so localStorage (keyed by origin) is wiped on every launch. It
+  // stays in use as a cache so the first paint is not a flash of defaults.
+  const settingsLoaded = useRef(false)
+
+  useEffect(() => {
+    let cancelled = false
+    api.getSettings()
+      .then(stored => {
+        if (cancelled) return
+        if (stored.theme === 'dark' || stored.theme === 'light') setTheme(stored.theme)
+        if (stored.scale && stored.scale in SCALE_ZOOM) setScale(stored.scale as Scale)
+        if (stored.visibleStats) setVisibleStats(parseVisibleStats(stored.visibleStats))
+      })
+      .catch(() => { /* keep the cached values */ })
+      .finally(() => { settingsLoaded.current = true })
+    return () => { cancelled = true }
+  }, [])
+
+  useEffect(() => {
+    if (!settingsLoaded.current) return
+    api.updateSettings({
+      theme,
+      scale,
+      visibleStats: JSON.stringify(visibleStats),
+    }).catch(() => { /* cached locally, retried on the next change */ })
+  }, [theme, scale, visibleStats])
+
   useEffect(() => {
     document.documentElement.dataset.theme = theme
     localStorage.setItem('theme', theme)
@@ -86,6 +117,14 @@ function MainApp() {
     document.documentElement.style.setProperty('--zoom', String(SCALE_ZOOM[scale]))
     localStorage.setItem('scale', scale)
   }, [scale])
+
+  const handleToggleStat = useCallback((key: StatKey) => {
+    setVisibleStats(prev => {
+      const next = { ...prev, [key]: !prev[key] }
+      saveVisibleStats(next)
+      return next
+    })
+  }, [])
 
   // Set initial selected counter and house ID when data loads
   useEffect(() => {
@@ -209,6 +248,8 @@ function MainApp() {
               onToggleTheme={setTheme}
               scale={scale}
               onToggleScale={setScale}
+              visibleStats={visibleStats}
+              onToggleStat={handleToggleStat}
             />
           ) : (
             <DashboardPage
@@ -222,6 +263,7 @@ function MainApp() {
               theme={theme}
               showAvg={showAvg}
               showTrend={showTrend}
+              visibleStats={visibleStats}
               onToggleAvg={() => setShowAvg(v => !v)}
               onToggleTrend={() => setShowTrend(v => !v)}
               onAddEntry={() => setShowAddEntry(true)}

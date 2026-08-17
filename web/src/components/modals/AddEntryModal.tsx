@@ -1,6 +1,7 @@
 import { useState, type FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { CounterWithEntries } from '../../hooks/useAppData'
+import { localDate } from '../../utils/helpers'
 
 export interface AddEntryModalProps {
   counter: CounterWithEntries
@@ -10,7 +11,7 @@ export interface AddEntryModalProps {
 
 export const AddEntryModal: FC<AddEntryModalProps> = ({ counter, onClose, onAdd }) => {
   const { t } = useTranslation()
-  const today = new Date().toISOString().split('T')[0]
+  const today = localDate()
   const [date, setDate] = useState(today)
   const [value, setValue] = useState('')
   const [note, setNote] = useState('')

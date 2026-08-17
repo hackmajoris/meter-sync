@@ -43,16 +43,19 @@ export const ExpandedChart: FC<ExpandedChartProps> = ({
   return (
     <div className="chart-expanded-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="chart-expanded-inner">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <div className="chart-header" style={{ marginBottom: 16 }}>
           <div>
             <div style={{ fontFamily: 'Outfit Variable', fontSize: 22, fontWeight: 600 }}>{counter.name}</div>
             <div style={{ color: 'var(--text2)', fontSize: 13, marginTop: 2 }}>{t('chart.full_history')}</div>
           </div>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-            <RangeToggle range={range} onToggle={onToggleRange} color={counter.color} />
-            <GroupByToggle groupBy={groupBy} onToggle={onToggleGroupBy} color={counter.color} />
-            <ChartTypeToggle type={chartType} onToggle={onToggleType} color={counter.color} />
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', minWidth: 0 }}>
+            <div className="chart-controls" style={{ minWidth: 0 }}>
+              <RangeToggle range={range} onToggle={onToggleRange} color={counter.color} />
+              <GroupByToggle groupBy={groupBy} onToggle={onToggleGroupBy} color={counter.color} />
+              <ChartTypeToggle type={chartType} onToggle={onToggleType} color={counter.color} />
+            </div>
             <button onClick={onClose} style={{
+              flexShrink: 0,
               background: 'var(--bg4)', border: 'none', borderRadius: 10, padding: '8px 14px',
               color: 'var(--text2)', cursor: 'pointer', fontFamily: 'Inter Variable', fontSize: 13,
               display: 'flex', alignItems: 'center', gap: 6

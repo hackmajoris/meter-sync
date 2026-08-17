@@ -40,6 +40,9 @@ func Register(mux *http.ServeMux, s *store.Store) {
 	mux.HandleFunc("DELETE /api/counters/{counterId}/entries/{id}", h.deleteEntry)
 
 	mux.HandleFunc("GET /api/counters/{counterId}/stats", h.getStats)
+
+	mux.HandleFunc("GET /api/settings", h.getSettings)
+	mux.HandleFunc("PUT /api/settings", h.updateSettings)
 }
 
 // ---- helpers ----

@@ -160,6 +160,12 @@ CREATE TABLE IF NOT EXISTS entries (
     note       TEXT NOT NULL DEFAULT '',
     UNIQUE(counter_id, date)
 );`,
+	// 2: UI preferences, stored alongside the data so they survive the
+	// Electron app's changing localhost port (a new origin every launch).
+	`CREATE TABLE IF NOT EXISTS settings (
+    key   TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);`,
 }
 
 func buildDSN(path, key string) string {
@@ -247,6 +253,45 @@ func newID() string {
 // isUniqueConflict reports whether err is a SQLite UNIQUE constraint violation.
 func isUniqueConflict(err error) bool {
 	return err != nil && strings.Contains(err.Error(), "UNIQUE constraint failed")
+}
+
+// ---- settings ----
+
+// Settings returns all stored UI preferences as a key/value map.
+func (s *Store) Settings(ctx context.Context) (map[string]string, error) {
+	rows, err := s.db.QueryContext(ctx, `SELECT key, value FROM settings`)
+	if err != nil {
+		return nil, fmt.Errorf("query settings: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck
+	out := make(map[string]string)
+	for rows.Next() {
+		var k, v string
+		if err := rows.Scan(&k, &v); err != nil {
+			return nil, fmt.Errorf("scan setting: %w", err)
+		}
+		out[k] = v
+	}
+	return out, rows.Err()
+}
+
+// SaveSettings upserts the given keys, leaving any other stored keys untouched.
+func (s *Store) SaveSettings(ctx context.Context, in map[string]string) error {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("begin tx: %w", err)
+	}
+	defer tx.Rollback() //nolint:errcheck
+
+	for k, v := range in {
+		if _, err := tx.ExecContext(ctx,
+			`INSERT INTO settings (key, value) VALUES (?, ?)
+             ON CONFLICT(key) DO UPDATE SET value = excluded.value`, k, v,
+		); err != nil {
+			return fmt.Errorf("save setting %s: %w", k, err)
+		}
+	}
+	return tx.Commit()
 }
 
 // ---- houses ----

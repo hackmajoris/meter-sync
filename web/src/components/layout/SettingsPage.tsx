@@ -6,6 +6,8 @@ import { getCounterIcon } from '../icons/CounterIcons'
 import { LanguageSwitcher } from '../common/LanguageSwitcher'
 import { ThemeSwitcher, type Theme } from '../common/ThemeSwitcher'
 import { ScaleSwitcher, type Scale } from '../common/ScaleSwitcher'
+import { StatVisibilityToggles } from '../common/StatVisibilityToggles'
+import type { StatKey, VisibleStats } from '../../utils/statCards'
 
 const isElectron = !!window.electronAPI
 
@@ -17,9 +19,11 @@ export interface SettingsPageProps {
   onToggleTheme: (theme: Theme) => void
   scale: Scale
   onToggleScale: (scale: Scale) => void
+  visibleStats: VisibleStats
+  onToggleStat: (key: StatKey) => void
 }
 
-export const SettingsPage: FC<SettingsPageProps> = ({ counters, onImport, onBack, theme, onToggleTheme, scale, onToggleScale }) => {
+export const SettingsPage: FC<SettingsPageProps> = ({ counters, onImport, onBack, theme, onToggleTheme, scale, onToggleScale, visibleStats, onToggleStat }) => {
   const { t } = useTranslation()
   const [importFeedback, setImportFeedback] = useState<Record<string, string>>({})
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -169,6 +173,16 @@ export const SettingsPage: FC<SettingsPageProps> = ({ counters, onImport, onBack
             </div>
           </div>
           <ScaleSwitcher scale={scale} onChange={onToggleScale} />
+        </div>
+
+        <div style={{ marginBottom: 32, padding: '16px 20px', background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <div>
+              <div style={{ fontFamily: 'Outfit Variable', fontSize: 14, fontWeight: 600 }}>{t('settings.stats')}</div>
+              <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>{t('settings.stats_subtitle')}</div>
+            </div>
+          </div>
+          <StatVisibilityToggles visibleStats={visibleStats} onToggle={onToggleStat} />
         </div>
 
         {/* Database section — Electron only */}

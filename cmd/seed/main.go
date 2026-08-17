@@ -9,6 +9,7 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
+	"hash/fnv"
 	"math"
 	"math/rand"
 	"net/url"
@@ -24,20 +25,28 @@ import (
 func main() {
 	dbPath := flag.String("db", "data/data.db", "sqlite database path")
 	dbKey := flag.String("key", "", "sqlite encryption key (or set DB_KEY env var)")
+	reset := flag.Bool("reset", false, "delete existing entries of the seeded counters before inserting")
 	flag.Parse()
 
 	if k := os.Getenv("DB_KEY"); k != "" {
 		*dbKey = k
 	}
 
-	if err := seed(*dbPath, *dbKey); err != nil {
+	if err := seed(*dbPath, *dbKey, *reset); err != nil {
 		fmt.Fprintf(os.Stderr, "seed: %v\n", err)
 		os.Exit(1)
 	}
 	fmt.Println("seed complete")
 }
 
-func seed(path, key string) error {
+// dayNoiseSeed derives a stable RNG seed from a counter/date pair.
+func dayNoiseSeed(counterID, date string) int64 {
+	h := fnv.New64a()
+	_, _ = h.Write([]byte(counterID + ":" + date))
+	return int64(h.Sum64())
+}
+
+func seed(path, key string, reset bool) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return fmt.Errorf("create db dir: %w", err)
 	}
@@ -88,10 +97,20 @@ func seed(path, key string) error {
 		}
 	}
 
+	if reset {
+		res, err := db.Exec(`DELETE FROM entries WHERE counter_id IN ('c1', 'c2', 'c3')`)
+		if err != nil {
+			return fmt.Errorf("reset entries: %w", err)
+		}
+		n, _ := res.RowsAffected()
+		fmt.Printf("  reset: %d entries deleted\n", n)
+	}
+
 	// ---- entries ----
-	// Fixed seed → same values on every run (deterministic).
-	rng := rand.New(rand.NewSource(42))
-	today := time.Now().Truncate(24 * time.Hour)
+	// Local midnight: Truncate works on the absolute time, so it lands on the
+	// previous day whenever the UTC offset pushes now() past midnight UTC.
+	now := time.Now()
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 
 	tx, err := db.Begin()
 	if err != nil {
@@ -116,20 +135,23 @@ func seed(path, key string) error {
 		created := 0
 		for i := 364; i >= 0; i-- {
 			day := today.AddDate(0, 0, -i)
+			date := day.Format("2006-01-02")
 
 			// Same formula as genSampleEntries in mockDataStore.ts:
 			//   month    = JS getMonth() → 0-indexed
 			//   seasonal = 1 + 0.25 * cos((month / 12) * 2π)
 			//   value    = baseVal * seasonal + (rand − 0.5) * variance * 2
+			// The noise is keyed by counter+date rather than by loop position, so a
+			// given day keeps its value no matter which window the run covers.
 			month := float64(day.Month() - 1)
 			seasonal := 1 + 0.25*math.Cos((month/12)*2*math.Pi)
+			rng := rand.New(rand.NewSource(dayNoiseSeed(c.id, date)))
 			val := c.baseVal*seasonal + (rng.Float64()-0.5)*c.variance*2
 			val = math.Round(val*100) / 100
 			if val < 0 {
 				val = 0
 			}
 
-			date := day.Format("2006-01-02")
 			id := fmt.Sprintf("%s-%s", c.id, date) // stable, repeatable ID
 			res, err := stmt.Exec(id, c.id, date, val)
 			if err != nil {

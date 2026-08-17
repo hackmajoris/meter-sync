@@ -44,6 +44,16 @@
     "peak": "Month Peak",
     "lowest": "Month Lowest"
   },
+  "comparison": {
+    "title": "Comparison",
+    "month": "This month",
+    "day": "Today",
+    "prev_month": "last month",
+    "yesterday": "yesterday",
+    "vs_prev_month": "vs last month",
+    "vs_yesterday": "vs yesterday",
+    "no_data": "No data yet"
+  },
   "chart": {
     "line": "Line",
     "bar": "Bar",
@@ -84,6 +94,8 @@
     "theme_light": "Light",
     "scale": "Text size",
     "scale_subtitle": "Adjust the overall interface size",
+    "stats": "Dashboard stats",
+    "stats_subtitle": "Choose which stat cards appear on the dashboard",
     "scale_sm": "Small",
     "scale_md": "Medium",
     "scale_lg": "Large",

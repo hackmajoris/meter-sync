@@ -33,6 +33,14 @@ export function parseCSV(text: string): Entry[] {
 }
 
 /**
+ * Local YYYY-MM-DD for a date. toISOString() would return the UTC day, which
+ * is the previous day for positive offsets in the early morning hours.
+ */
+export function localDate(d = new Date()): string {
+  return d.toLocaleDateString('en-CA')
+}
+
+/**
  * Color palette for counters
  */
 export const PALETTE = [

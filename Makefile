@@ -29,14 +29,18 @@ dev:
 	(cd web && npm run dev) & \
 	wait
 
+# Pass RESET=1 to rewrite the seeded counters' entries instead of keeping
+# whatever is already stored (inserts are INSERT OR IGNORE otherwise).
+SEED_FLAGS := $(if $(RESET),-reset,)
+
 seed:
-	go run ./cmd/seed
+	go run ./cmd/seed $(SEED_FLAGS)
 
 # Seed the database used by the Electron app.
 # If the database is encrypted, pass the key: make seed-electron KEY=your-key
 # Override the path:                           make seed-electron DB=/your/path/data.db
 seed-electron:
-	DB_KEY="$(KEY)" go run ./cmd/seed -db "$(or $(DB),$(ELECTRON_DB))"
+	DB_KEY="$(KEY)" go run ./cmd/seed -db "$(or $(DB),$(ELECTRON_DB))" $(SEED_FLAGS)
 
 test:
 	go test -race -cover ./...

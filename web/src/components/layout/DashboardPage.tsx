@@ -9,6 +9,8 @@ import { GroupByToggle } from '../charts/GroupByToggle'
 import { RangeToggle, type ChartRange } from '../charts/RangeToggle'
 import type { Theme } from '../common/ThemeSwitcher'
 import { OverlayToggles } from '../charts/OverlayToggles'
+import { localDate } from '../../utils/helpers'
+import type { VisibleStats } from '../../utils/statCards'
 
 export interface DashboardPageProps {
   counter: CounterWithEntries | null
@@ -21,6 +23,7 @@ export interface DashboardPageProps {
   theme: Theme
   showAvg: boolean
   showTrend: boolean
+  visibleStats: VisibleStats
   onToggleAvg: () => void
   onToggleTrend: () => void
   onAddEntry: () => void
@@ -34,6 +37,51 @@ export interface DashboardPageProps {
   onOpenSidebar: () => void
 }
 
+interface ComparisonRowProps {
+  label: string
+  currentLabel: string
+  previousLabel: string
+  current: number | null
+  previous: number | null
+  unit: string
+  color: string
+  emptyText: string
+  divider?: boolean
+}
+
+// Consumption going up is bad, so increases are red and decreases green.
+const ComparisonRow: FC<ComparisonRowProps> = ({ label, currentLabel, previousLabel, current, previous, unit, color, emptyText, divider = true }) => {
+  const hasBoth = current !== null && previous !== null
+  const delta = hasBoth ? current - previous : null
+  const percent = hasBoth && previous !== 0 ? (delta! / previous) * 100 : null
+  const deltaColor = delta === null || delta === 0 ? 'var(--text3)' : delta > 0 ? '#ef4444' : '#22c55e'
+
+  return (
+    <div style={{ padding: '12px 0', borderBottom: divider ? '1px solid var(--border)' : 'none' }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+        <div style={{ fontSize: 13, color: 'var(--text2)' }}>{label}</div>
+        {current === null ? (
+          <div style={{ fontSize: 12, color: 'var(--text3)' }}>{emptyText}</div>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+            <span style={{ fontFamily: 'Outfit Variable', fontSize: 18, fontWeight: 600, color }}>
+              {current.toFixed(2)} <span style={{ fontSize: 12, fontWeight: 400, color: 'var(--text2)' }}>{unit}</span>
+            </span>
+            <span style={{ fontSize: 12, color: 'var(--text3)' }}>
+              {previousLabel} {previous === null ? '—' : previous.toFixed(2)}
+            </span>
+          </div>
+        )}
+      </div>
+      <div style={{ marginTop: 6, fontSize: 11, color: deltaColor }}>
+        {delta === null
+          ? '—'
+          : `${delta >= 0 ? '↑' : '↓'} ${Math.abs(delta).toFixed(2)} ${unit}${percent === null ? '' : ` (${delta >= 0 ? '+' : '−'}${Math.abs(percent).toFixed(1)}%)`} ${currentLabel}`}
+      </div>
+    </div>
+  )
+}
+
 export const DashboardPage: FC<DashboardPageProps> = ({
   counter,
   chartType,
@@ -45,6 +93,7 @@ export const DashboardPage: FC<DashboardPageProps> = ({
   theme,
   showAvg,
   showTrend,
+  visibleStats,
   onToggleAvg,
   onToggleTrend,
   onAddEntry,
@@ -69,8 +118,8 @@ export const DashboardPage: FC<DashboardPageProps> = ({
     const vals = counter.entries.map(e => e.value)
     const avg = vals.reduce((a,b) => a+b, 0) / vals.length
 
-    const today = new Date().toISOString().split('T')[0]
-    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
+    const today = localDate()
+    const yesterday = localDate(new Date(Date.now() - 86400000))
     const todayEntry = counter.entries.find(e => e.date === today)
     const yesterdayEntry = counter.entries.find(e => e.date === yesterday)
 
@@ -84,7 +133,15 @@ export const DashboardPage: FC<DashboardPageProps> = ({
     const month = today.slice(0, 7)
     const year = today.slice(0, 4)
     const monthEntries = counter.entries.filter(e => e.date.startsWith(month))
-    const monthTotal = monthEntries.reduce((a, e) => a + e.value, 0).toFixed(1)
+    const monthSum = monthEntries.reduce((a, e) => a + e.value, 0)
+    const monthTotal = monthSum.toFixed(1)
+
+    const prevMonthDate = new Date()
+    prevMonthDate.setDate(1)
+    prevMonthDate.setMonth(prevMonthDate.getMonth() - 1)
+    const prevMonth = localDate(prevMonthDate).slice(0, 7)
+    const prevMonthSum = counter.entries.filter(e => e.date.startsWith(prevMonth)).reduce((a, e) => a + e.value, 0)
+
     const yearTotal = counter.entries.filter(e => e.date.startsWith(year)).reduce((a, e) => a + e.value, 0).toFixed(1)
     let peak = null, low = null
     if (monthEntries.length) {
@@ -102,6 +159,8 @@ export const DashboardPage: FC<DashboardPageProps> = ({
       low,
       diff,
       diffPercent,
+      monthVsPrev: { current: monthSum, previous: prevMonthSum },
+      todayVsYesterday: { current: todayEntry?.value ?? null, previous: yesterdayEntry?.value ?? null },
     }
   }, [counter?.entries])
 
@@ -190,30 +249,36 @@ export const DashboardPage: FC<DashboardPageProps> = ({
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '14px 14px' : '20px 28px' }}>
-        {stats && (
+        {stats && Object.values(visibleStats).some(Boolean) && (
           <div className="stats-row" style={{ display: 'flex', gap: 10, marginBottom: 16, overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', paddingBottom: 2 }}>
-            {stats.diff !== null && (
+            {visibleStats.today_vs_yesterday && stats.diff !== null && (
               <StatCard label={t('stats.today_vs_yesterday')} value={stats.diff} unit={counter.unit} color={counter.color} percent={parseFloat(stats.diffPercent!)} />
             )}
-            <StatCard label={t('stats.average')} value={stats.avg} unit={counter.unit} color={counter.color} />
-            <StatCard label={t('stats.total')} value={stats.monthTotal} unit={counter.unit} color={counter.color} />
-            <StatCard label={t('stats.year_total')} value={stats.yearTotal} unit={counter.unit} color={counter.color} />
-            {stats.peak && (
+            {visibleStats.average && (
+              <StatCard label={t('stats.average')} value={stats.avg} unit={counter.unit} color={counter.color} />
+            )}
+            {visibleStats.total && (
+              <StatCard label={t('stats.total')} value={stats.monthTotal} unit={counter.unit} color={counter.color} />
+            )}
+            {visibleStats.year_total && (
+              <StatCard label={t('stats.year_total')} value={stats.yearTotal} unit={counter.unit} color={counter.color} />
+            )}
+            {visibleStats.peak && stats.peak && (
               <StatCard label={t('stats.peak')} value={stats.peak.value} unit={counter.unit} color={counter.color} sub={stats.peak.date} />
             )}
-            {stats.low && (
+            {visibleStats.lowest && stats.low && (
               <StatCard label={t('stats.lowest')} value={stats.low.value} unit={counter.unit} color={counter.color} sub={stats.low.date} />
             )}
           </div>
         )}
 
         <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 18, padding: '20px 22px', marginBottom: 20 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <div className="chart-header" style={{ marginBottom: 12 }}>
             <div>
               <div style={{ fontFamily: 'Outfit Variable', fontSize: 15, fontWeight: 600 }}>{t('chart.usage_over_time')}</div>
               <div style={{ color: 'var(--text3)', fontSize: 12, marginTop: 2 }}>{t('chart.last_entries', { count: counter.entries.length })}</div>
             </div>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <div className="chart-controls" style={{ minWidth: 0 }}>
               <RangeToggle range={range} onToggle={onToggleRange} color={counter.color} />
               <GroupByToggle groupBy={groupBy} onToggle={onToggleGroupBy} color={counter.color} />
               <ChartTypeToggle type={chartType} onToggle={onToggleChartType} color={counter.color} />
@@ -244,6 +309,33 @@ export const DashboardPage: FC<DashboardPageProps> = ({
             }
           </div>
         </div>
+
+        {stats && (
+          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 18, padding: '16px 20px 4px', marginBottom: 20 }}>
+            <div style={{ fontFamily: 'Outfit Variable', fontSize: 15, fontWeight: 600, marginBottom: 4 }}>{t('comparison.title')}</div>
+            <ComparisonRow
+              label={t('comparison.month')}
+              currentLabel={t('comparison.vs_prev_month')}
+              previousLabel={t('comparison.prev_month')}
+              current={stats.monthVsPrev.current}
+              previous={stats.monthVsPrev.previous}
+              unit={counter.unit}
+              color={counter.color}
+              emptyText={t('comparison.no_data')}
+            />
+            <ComparisonRow
+              label={t('comparison.day')}
+              currentLabel={t('comparison.vs_yesterday')}
+              previousLabel={t('comparison.yesterday')}
+              current={stats.todayVsYesterday.current}
+              previous={stats.todayVsYesterday.previous}
+              unit={counter.unit}
+              color={counter.color}
+              emptyText={t('comparison.no_data')}
+              divider={false}
+            />
+          </div>
+        )}
 
         <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 18, overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: 500 }}>
           <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
@@ -303,6 +395,7 @@ export const DashboardPage: FC<DashboardPageProps> = ({
             </div>
           )}
         </div>
+
       </div>
     </>
   )

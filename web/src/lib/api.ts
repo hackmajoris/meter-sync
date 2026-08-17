@@ -110,6 +110,9 @@ export interface UpdateEntryInput {
  * API interface that must be implemented by both real and mock API clients
  * This ensures type safety and that mocks stay in sync with the real implementation
  */
+/** UI preferences, stored server-side as opaque string values. */
+export type Settings = Record<string, string>
+
 export interface IApi {
   // Houses
   getHouses(): Promise<House[]>
@@ -135,6 +138,10 @@ export interface IApi {
   
   // Statistics
   getCounterStats(counterId: string, filters?: GetStatsFilters): Promise<CounterStats>
+
+  // Settings
+  getSettings(): Promise<Settings>
+  updateSettings(settings: Settings): Promise<Settings>
 }
 
 // ============================================================================
@@ -369,6 +376,24 @@ class ApiClient implements IApi {
     const query = params.toString()
     return request<CounterStats>(`/counters/${counterId}/stats${query ? `?${query}` : ''}`)
   }
+
+  // ============================================================================
+  // Settings API
+  // ============================================================================
+
+  /**
+   * Get all stored UI preferences
+   */
+  async getSettings(): Promise<Settings> {
+    return request<Settings>('/settings')
+  }
+
+  /**
+   * Merge the given keys into the stored preferences
+   */
+  async updateSettings(settings: Settings): Promise<Settings> {
+    return request<Settings>('/settings', { method: 'PUT', body: JSON.stringify(settings) })
+  }
 }
 
 // ============================================================================
@@ -398,6 +423,9 @@ export const deleteEntry = apiClient.deleteEntry.bind(apiClient)
 export const bulkCreateEntries = apiClient.bulkCreateEntries.bind(apiClient)
 
 export const getCounterStats = apiClient.getCounterStats.bind(apiClient)
+
+export const getSettings = apiClient.getSettings.bind(apiClient)
+export const updateSettings = apiClient.updateSettings.bind(apiClient)
 
 // ============================================================================
 // Export API functions as default object for convenience

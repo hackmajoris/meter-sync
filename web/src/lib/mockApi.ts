@@ -20,6 +20,7 @@ import type {
   UpdateCounterInput,
   CreateEntryInput,
   UpdateEntryInput,
+  Settings,
   IApi,
 } from './api'
 
@@ -47,6 +48,8 @@ function notFoundError(resource: string): Error {
  * MockApiClient implements the IApi interface using in-memory data
  */
 class MockApiClient implements IApi {
+  private settings: Settings = {}
+
   async getHouses(): Promise<House[]> {
     await delay(MOCK_DELAY)
     return mockDataStore.getHouses()
@@ -395,6 +398,21 @@ class MockApiClient implements IApi {
       count: values.length,
     }
   }
+
+  // ============================================================================
+  // Settings API
+  // ============================================================================
+
+  async getSettings(): Promise<Settings> {
+    await delay(MOCK_DELAY)
+    return { ...this.settings }
+  }
+
+  async updateSettings(settings: Settings): Promise<Settings> {
+    await delay(MOCK_DELAY)
+    this.settings = { ...this.settings, ...settings }
+    return { ...this.settings }
+  }
 }
 
 // ============================================================================
@@ -424,6 +442,9 @@ export const deleteEntry = mockApiClient.deleteEntry.bind(mockApiClient)
 export const bulkCreateEntries = mockApiClient.bulkCreateEntries.bind(mockApiClient)
 
 export const getCounterStats = mockApiClient.getCounterStats.bind(mockApiClient)
+
+export const getSettings = mockApiClient.getSettings.bind(mockApiClient)
+export const updateSettings = mockApiClient.updateSettings.bind(mockApiClient)
 
 // ============================================================================
 // Export as default object
