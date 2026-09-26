@@ -4,13 +4,14 @@
  */
 
 import type { House, Counter, Entry } from './api'
-import { localDate } from '../utils/helpers'
+import { localDate, newId } from '../utils/helpers'
 
 // Helper to generate sample entries with realistic seasonal patterns
 function genSampleEntries(baseVal: number, variance: number, daysBack = 365): Entry[] {
   const entries: Entry[] = []
   const today = new Date()
-  
+  let reading = 0
+
   for (let i = daysBack - 1; i >= 0; i--) {
     const d = new Date(today)
     d.setDate(d.getDate() - i)
@@ -18,10 +19,12 @@ function genSampleEntries(baseVal: number, variance: number, daysBack = 365): En
     const month = d.getMonth() // 0=Jan
     const seasonal = 1 + 0.25 * Math.cos(((month - 0) / 12) * 2 * Math.PI)
     const val = +(baseVal * seasonal + (Math.random() - 0.5) * variance * 2).toFixed(2)
+    // Entries are cumulative meter readings
+    reading = +(reading + Math.max(0, val)).toFixed(2)
     entries.push({
-      id: crypto.randomUUID(),
+      id: newId(),
       date: localDate(d),
-      value: Math.max(0, val),
+      value: reading,
       note: ''
     })
   }

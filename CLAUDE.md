@@ -6,9 +6,11 @@ github.com/hackmajoris/counters
 ## Structure
 - `cmd/server/` — single binary entry point; keep thin, wire into `pkg/`
 - `pkg/` — all business logic; each package independently testable
+
 - `pkg/web/` — embeds `web/dist/` and exposes `http.Handler` for the SPA
 - `web/` — frontend app; `npm run build` outputs to `web/dist/`
 - `electron/` — Electron shell; spawns `.bin/server` and opens it in a BrowserWindow
+
 
 ## Adding a New Package
 1. Create `pkg/<n>/`

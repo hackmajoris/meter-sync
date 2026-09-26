@@ -1,6 +1,7 @@
 import { useMemo, type FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { CounterWithEntries } from '../../hooks/useAppData'
+import type { Entry } from '../../lib'
 import { getCounterIcon } from '../icons/CounterIcons'
 import { StatCard } from '../common/StatCard'
 import { MeterChart } from '../charts/MeterChart'
@@ -9,7 +10,7 @@ import { GroupByToggle } from '../charts/GroupByToggle'
 import { RangeToggle, type ChartRange } from '../charts/RangeToggle'
 import type { Theme } from '../common/ThemeSwitcher'
 import { OverlayToggles } from '../charts/OverlayToggles'
-import { localDate } from '../../utils/helpers'
+import { localDate, toConsumption } from '../../utils/helpers'
 import type { VisibleStats } from '../../utils/statCards'
 
 export interface DashboardPageProps {
@@ -113,15 +114,32 @@ export const DashboardPage: FC<DashboardPageProps> = ({
     [counter?.entries]
   )
 
+  // Real readings plus an estimated reading for every day missing between them.
+  const tableRows = useMemo(() => {
+    const all = counter?.entries || []
+    if (!all.length) return []
+    const byDate = new Map(all.map(e => [e.date, e]))
+    const first = sortedEntries[sortedEntries.length - 1]
+    const rows: (Entry & { estimated?: boolean })[] = [first]
+    let reading = first.value
+    for (const c of toConsumption(all)) {
+      const real = byDate.get(c.date)
+      reading = real ? real.value : +(reading + c.value).toFixed(2)
+      rows.push(real ?? { ...c, value: reading, note: '', estimated: true })
+    }
+    return rows.reverse()
+  }, [counter?.entries, sortedEntries])
+
   const stats = useMemo(() => {
-    if (!counter?.entries.length) return null
-    const vals = counter.entries.map(e => e.value)
+    const entries = toConsumption(counter?.entries || [])
+    if (!entries.length) return null
+    const vals = entries.map(e => e.value)
     const avg = vals.reduce((a,b) => a+b, 0) / vals.length
 
     const today = localDate()
     const yesterday = localDate(new Date(Date.now() - 86400000))
-    const todayEntry = counter.entries.find(e => e.date === today)
-    const yesterdayEntry = counter.entries.find(e => e.date === yesterday)
+    const todayEntry = entries.find(e => e.date === today)
+    const yesterdayEntry = entries.find(e => e.date === yesterday)
 
     let diff = null, diffPercent = null
     if (todayEntry && yesterdayEntry) {
@@ -132,7 +150,7 @@ export const DashboardPage: FC<DashboardPageProps> = ({
 
     const month = today.slice(0, 7)
     const year = today.slice(0, 4)
-    const monthEntries = counter.entries.filter(e => e.date.startsWith(month))
+    const monthEntries = entries.filter(e => e.date.startsWith(month))
     const monthSum = monthEntries.reduce((a, e) => a + e.value, 0)
     const monthTotal = monthSum.toFixed(1)
 
@@ -140,9 +158,9 @@ export const DashboardPage: FC<DashboardPageProps> = ({
     prevMonthDate.setDate(1)
     prevMonthDate.setMonth(prevMonthDate.getMonth() - 1)
     const prevMonth = localDate(prevMonthDate).slice(0, 7)
-    const prevMonthSum = counter.entries.filter(e => e.date.startsWith(prevMonth)).reduce((a, e) => a + e.value, 0)
+    const prevMonthSum = entries.filter(e => e.date.startsWith(prevMonth)).reduce((a, e) => a + e.value, 0)
 
-    const yearTotal = counter.entries.filter(e => e.date.startsWith(year)).reduce((a, e) => a + e.value, 0).toFixed(1)
+    const yearTotal = entries.filter(e => e.date.startsWith(year)).reduce((a, e) => a + e.value, 0).toFixed(1)
     let peak = null, low = null
     if (monthEntries.length) {
       const peakEntry = monthEntries.reduce((a, e) => e.value > a.value ? e : a)
@@ -363,10 +381,10 @@ export const DashboardPage: FC<DashboardPageProps> = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {sortedEntries.map((entry, i) => (
+                  {tableRows.map((entry, i) => (
                     <tr
                       key={entry.id}
-                      style={{ borderBottom: i < sortedEntries.length - 1 ? '1px solid var(--border)' : 'none', transition: 'background 0.1s' }}
+                      style={{ borderBottom: i < tableRows.length - 1 ? '1px solid var(--border)' : 'none', transition: 'background 0.1s', fontStyle: entry.estimated ? 'italic' : undefined, opacity: entry.estimated ? 0.55 : undefined }}
                       onMouseEnter={e => e.currentTarget.style.background = 'var(--bg3)'}
                       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                     >
@@ -377,16 +395,16 @@ export const DashboardPage: FC<DashboardPageProps> = ({
                         <span style={{ fontFamily: 'Outfit Variable', fontWeight: 600, fontSize: 15, color: counter.color }}>{entry.value}</span>
                         <span style={{ color: 'var(--text3)', fontSize: 12, marginLeft: 4 }}>{counter.unit}</span>
                       </td>
-                      <td style={{ padding: '12px 20px', fontSize: 12, color: 'var(--text3)' }}>{entry.note || '—'}</td>
+                      <td style={{ padding: '12px 20px', fontSize: 12, color: 'var(--text3)' }}>{entry.estimated ? t('entries.estimated') : entry.note || '—'}</td>
                       <td style={{ padding: '12px 20px', textAlign: 'right' }}>
-                        <button
+                        {!entry.estimated && <button
                           onClick={() => onDeleteEntry(entry.id)}
                           style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text3)', padding: '4px 6px', borderRadius: 6, transition: 'color 0.15s' }}
                           onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
                           onMouseLeave={e => e.currentTarget.style.color = 'var(--text3)'}
                         >
                           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                        </button>
+                        </button>}
                       </td>
                     </tr>
                   ))}

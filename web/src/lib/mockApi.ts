@@ -4,6 +4,7 @@
  */
 
 import { mockDataStore } from './mockDataStore'
+import { newId } from '../utils/helpers'
 import type {
   House,
   Counter,
@@ -70,7 +71,7 @@ class MockApiClient implements IApi {
     }
     
     const house: House = {
-      id: crypto.randomUUID(),
+      id: newId(),
       name: data.name.trim(),
     }
     
@@ -145,7 +146,7 @@ class MockApiClient implements IApi {
     }
     
     const counter: Counter = {
-      id: crypto.randomUUID(),
+      id: newId(),
       name: data.name.trim(),
       unit: data.unit.trim(),
       color: data.color,
@@ -257,7 +258,7 @@ class MockApiClient implements IApi {
     }
     
     const entry: Entry = {
-      id: crypto.randomUUID(),
+      id: newId(),
       date: data.date,
       value: data.value,
       note: data.note || '',
@@ -336,7 +337,7 @@ class MockApiClient implements IApi {
         }
         
         const entry: Entry = {
-          id: crypto.randomUUID(),
+          id: newId(),
           date: entryData.date,
           value: entryData.value,
           note: entryData.note || '',

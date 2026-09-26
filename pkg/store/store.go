@@ -7,8 +7,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"math"
 	"net/url"
 	"strings"
+	"time"
 
 	_ "github.com/mutecomm/go-sqlcipher/v4" // register sqlite3 driver with AES-256 encryption support
 )
@@ -635,29 +637,66 @@ func (s *Store) BulkCreateEntries(ctx context.Context, counterID string, entries
 
 // ---- stats ----
 
-// CounterStats computes aggregated statistics for a counter, optionally filtered by date range.
+// CounterStats computes daily consumption statistics for a counter, optionally filtered by date range.
+// Entries are cumulative meter readings. The difference between two readings is spread evenly
+// over each day between them, the last day taking the rounding remainder, and must match
+// toConsumption in web/src/utils/helpers.ts. The date filter applies to those days, so the
+// first day in range still counts against the reading before it.
 func (s *Store) CounterStats(ctx context.Context, counterID string, f StatsFilters) (Stats, error) {
-	q := `SELECT AVG(value), SUM(value), MAX(value), MIN(value), COUNT(*) FROM entries WHERE counter_id = ?`
-	args := []any{counterID}
-	if f.StartDate != "" {
-		q += ` AND date >= ?`
-		args = append(args, f.StartDate)
-	}
-	if f.EndDate != "" {
-		q += ` AND date <= ?`
-		args = append(args, f.EndDate)
-	}
-
-	var avg, total, maxVal, minVal sql.NullFloat64
-	var count sql.NullInt64
-	if err := s.db.QueryRowContext(ctx, q, args...).Scan(&avg, &total, &maxVal, &minVal, &count); err != nil {
+	rows, err := s.db.QueryContext(ctx, `SELECT date, value FROM entries WHERE counter_id = ? ORDER BY date`, counterID)
+	if err != nil {
 		return Stats{}, fmt.Errorf("query stats: %w", err)
 	}
-	return Stats{
-		Avg:   avg.Float64,
-		Total: total.Float64,
-		Max:   maxVal.Float64,
-		Min:   minVal.Float64,
-		Count: int(count.Int64),
-	}, nil
+	defer rows.Close() //nolint:errcheck
+
+	var st Stats
+	var prevDate time.Time
+	var prevValue float64
+	first := true
+	for rows.Next() {
+		var date string
+		var value float64
+		if err := rows.Scan(&date, &value); err != nil {
+			return Stats{}, fmt.Errorf("scan stats: %w", err)
+		}
+		d, err := time.Parse("2006-01-02", date)
+		if err != nil {
+			return Stats{}, fmt.Errorf("parse date %q: %w", date, err)
+		}
+		if !first {
+			days := int(math.Round(d.Sub(prevDate).Hours() / 24))
+			delta := value - prevValue
+			share := round2(delta / float64(days))
+			for i := 1; i <= days; i++ {
+				day := prevDate.AddDate(0, 0, i).Format("2006-01-02")
+				if (f.StartDate != "" && day < f.StartDate) || (f.EndDate != "" && day > f.EndDate) {
+					continue
+				}
+				v := share
+				if i == days {
+					v = round2(delta - share*float64(days-1))
+				}
+				if st.Count == 0 || v > st.Max {
+					st.Max = v
+				}
+				if st.Count == 0 || v < st.Min {
+					st.Min = v
+				}
+				st.Total += v
+				st.Count++
+			}
+		}
+		first = false
+		prevDate, prevValue = d, value
+	}
+	if err := rows.Err(); err != nil {
+		return Stats{}, fmt.Errorf("iterate stats: %w", err)
+	}
+	if st.Count > 0 {
+		st.Total = round2(st.Total)
+		st.Avg = st.Total / float64(st.Count)
+	}
+	return st, nil
 }
+
+func round2(v float64) float64 { return math.Round(v*100) / 100 }

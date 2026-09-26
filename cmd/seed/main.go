@@ -131,10 +131,16 @@ func seed(path, key string, reset bool) error {
 		}
 	}(stmt) //nolicnt:errcheck
 
+	// Entries are cumulative meter readings. Accumulating from a fixed epoch keeps
+	// each day's reading stable across runs, so INSERT OR IGNORE never leaves a jump
+	// between previously seeded days and new ones.
+	epoch := time.Date(2020, 1, 1, 0, 0, 0, 0, today.Location())
+	firstDay := today.AddDate(0, 0, -364)
+
 	for _, c := range counters {
 		created := 0
-		for i := 364; i >= 0; i-- {
-			day := today.AddDate(0, 0, -i)
+		reading := 0.0
+		for day := epoch; !day.After(today); day = day.AddDate(0, 0, 1) {
 			date := day.Format("2006-01-02")
 
 			// Same formula as genSampleEntries in mockDataStore.ts:
@@ -151,9 +157,13 @@ func seed(path, key string, reset bool) error {
 			if val < 0 {
 				val = 0
 			}
+			reading = math.Round((reading+val)*100) / 100
+			if day.Before(firstDay) {
+				continue
+			}
 
 			id := fmt.Sprintf("%s-%s", c.id, date) // stable, repeatable ID
-			res, err := stmt.Exec(id, c.id, date, val)
+			res, err := stmt.Exec(id, c.id, date, reading)
 			if err != nil {
 				return fmt.Errorf("insert entry %s/%s: %w", c.id, date, err)
 			}

@@ -117,6 +117,7 @@
   "entries": {
     "title": "Înregistrări Zilnice",
     "records": "{{count}} înregistrări",
+    "estimated": "estimat",
     "optional": "(opțional)"
   },
   "actions": {

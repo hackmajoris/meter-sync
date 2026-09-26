@@ -5,6 +5,14 @@
 import type { Entry } from '../lib'
 
 /**
+ * Random hex id. newId() only exists in secure contexts (HTTPS or
+ * localhost), so it fails when the demo is served over plain HTTP on a LAN IP.
+ */
+export function newId(): string {
+  return Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('')
+}
+
+/**
  * Parse CSV text into entries
  */
 export function parseCSV(text: string): Entry[] {
@@ -22,7 +30,7 @@ export function parseCSV(text: string): Entry[] {
     if (!date.match(/^\d{4}-\d{2}-\d{2}$/) || isNaN(v)) continue
     
     entries.push({
-      id: crypto.randomUUID(),
+      id: newId(),
       date,
       value: v,
       note: noteParts.join(',').trim() || ''
@@ -38,6 +46,32 @@ export function parseCSV(text: string): Entry[] {
  */
 export function localDate(d = new Date()): string {
   return d.toLocaleDateString('en-CA')
+}
+
+/**
+ * Entries are cumulative meter readings. Returns daily consumption sorted
+ * ascending by date. When days are missing between two readings, the
+ * difference is spread evenly over each day of the gap, the last day taking
+ * the rounding remainder so totals stay exact. The first reading has no
+ * predecessor and is dropped.
+ */
+export function toConsumption(entries: Entry[]): Entry[] {
+  const DAY = 86400000
+  const sorted = [...entries].sort((a, b) => a.date.localeCompare(b.date))
+  const out: Entry[] = []
+  for (let i = 1; i < sorted.length; i++) {
+    const prev = sorted[i - 1], e = sorted[i]
+    const start = Date.parse(prev.date + 'T00:00:00Z')
+    const days = Math.round((Date.parse(e.date + 'T00:00:00Z') - start) / DAY)
+    const delta = e.value - prev.value
+    const share = +(delta / days).toFixed(2)
+    for (let d = 1; d <= days; d++) {
+      const date = new Date(start + d * DAY).toISOString().slice(0, 10)
+      const value = d === days ? +(delta - share * (days - 1)).toFixed(2) : share
+      out.push({ ...e, id: d === days ? e.id : `${e.id}-${date}`, date, value })
+    }
+  }
+  return out
 }
 
 /**

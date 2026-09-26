@@ -14,7 +14,7 @@ import { Line, Bar } from 'react-chartjs-2'
 import type { CounterWithEntries } from '../../hooks/useAppData'
 import type { ChartRange } from './RangeToggle'
 import type { Theme } from '../common/ThemeSwitcher'
-import { polyfit } from '../../utils/helpers'
+import { polyfit, toConsumption } from '../../utils/helpers'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Filler, Tooltip)
 
@@ -42,7 +42,7 @@ export const MeterChart: FC<MeterChartProps> = ({
   const { t } = useTranslation()
   const chartRef = useRef(null)
   const sortedEntries = useMemo(() => {
-    const all = [...counter.entries].sort((a,b) => a.date.localeCompare(b.date))
+    const all = toConsumption(counter.entries)
     if (range === 'all') return all
     const years = range === '1y' ? 1 : range === '3y' ? 3 : 5
     const minYear = new Date().getFullYear() - (years - 1)
