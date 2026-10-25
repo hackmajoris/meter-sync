@@ -243,6 +243,7 @@ function MainApp() {
             <SettingsPage
               counters={counters}
               onImport={importEntries}
+              onDeleteCounter={handleDeleteCounter}
               onBack={() => setView('dashboard')}
               theme={theme}
               onToggleTheme={setTheme}

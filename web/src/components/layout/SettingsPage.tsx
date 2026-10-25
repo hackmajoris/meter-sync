@@ -14,6 +14,7 @@ const isElectron = !!window.electronAPI
 export interface SettingsPageProps {
   counters: CounterWithEntries[]
   onImport: (counterId: string, entries: Array<{ date: string; value: number; note?: string }>) => Promise<{ created: number; skipped: number }>
+  onDeleteCounter: (id: string) => void
   onBack: () => void
   theme: Theme
   onToggleTheme: (theme: Theme) => void
@@ -23,7 +24,7 @@ export interface SettingsPageProps {
   onToggleStat: (key: StatKey) => void
 }
 
-export const SettingsPage: FC<SettingsPageProps> = ({ counters, onImport, onBack, theme, onToggleTheme, scale, onToggleScale, visibleStats, onToggleStat }) => {
+export const SettingsPage: FC<SettingsPageProps> = ({ counters, onImport, onDeleteCounter, onBack, theme, onToggleTheme, scale, onToggleScale, visibleStats, onToggleStat }) => {
   const { t } = useTranslation()
   const [importFeedback, setImportFeedback] = useState<Record<string, string>>({})
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -37,6 +38,7 @@ export const SettingsPage: FC<SettingsPageProps> = ({ counters, onImport, onBack
   const [newKeyConfirm, setNewKeyConfirm] = useState('')
   const [keyError, setKeyError] = useState<string | null>(null)
   const [confirmReset, setConfirmReset] = useState(false)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!isElectron) return
@@ -306,6 +308,23 @@ export const SettingsPage: FC<SettingsPageProps> = ({ counters, onImport, onBack
                   </div>
                 </div>
               </div>
+              {confirmDeleteId === counter.id ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 'fit-content' }}>
+                <div style={{ fontSize: 12, color: 'var(--text2)' }}>{t('counter.delete_confirm', { name: counter.name })}</div>
+                <button
+                  onClick={() => { setConfirmDeleteId(null); onDeleteCounter(counter.id) }}
+                  style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 9, padding: '7px 14px', color: '#ef4444', cursor: 'pointer', fontFamily: 'Inter Variable', fontSize: 13, fontWeight: 500 }}
+                >
+                  {t('actions.delete')}
+                </button>
+                <button
+                  onClick={() => setConfirmDeleteId(null)}
+                  style={{ background: 'var(--bg4)', border: '1px solid var(--border)', borderRadius: 9, padding: '7px 14px', color: 'var(--text2)', cursor: 'pointer', fontFamily: 'Inter Variable', fontSize: 13, fontWeight: 500 }}
+                >
+                  {t('actions.cancel')}
+                </button>
+              </div>
+              ) : (
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 'fit-content' }}>
                 {importFeedback[counter.id] && (
                   <div style={{
@@ -363,7 +382,18 @@ export const SettingsPage: FC<SettingsPageProps> = ({ counters, onImport, onBack
                   </svg>
                   {t('settings.import')}
                 </button>
+                <button
+                  onClick={() => setConfirmDeleteId(counter.id)}
+                  aria-label={t('actions.delete')}
+                  title={t('actions.delete')}
+                  style={{ background: 'transparent', border: 'none', padding: '7px 10px', borderRadius: 9, cursor: 'pointer', color: 'var(--text3)', display: 'flex', alignItems: 'center', transition: 'color 0.15s' }}
+                  onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'var(--text3)'}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                </button>
               </div>
+              )}
             </div>
           ))}
         </div>
