@@ -13,6 +13,8 @@
     "add": "Adaugă Casă",
     "no_houses": "Nicio casă încă",
     "no_houses_sub": "Adaugă prima casă pentru a începe urmărirea",
+    "delete_confirm": "Șterge \"{{name}}\"?",
+    "has_counters": "Șterge mai întâi cele {{count}} contor(oare)",
     "no_counters_sub": "Adaugă primul contor pentru a începe urmărirea"
   },
   "entry": {
@@ -96,6 +98,8 @@
     "scale_subtitle": "Ajustează dimensiunea generală a interfeței",
     "stats": "Statistici tablou de bord",
     "stats_subtitle": "Alege ce carduri de statistici apar pe tabloul de bord",
+    "houses": "Case",
+    "houses_subtitle": "Elimină casele pe care nu le mai urmărești",
     "scale_sm": "Mic",
     "scale_md": "Mediu",
     "scale_lg": "Mare",

@@ -50,6 +50,7 @@ function MainApp() {
     loading, 
     error, 
     addHouse, 
+    deleteHouse, 
     addCounter, 
     deleteCounter, 
     addEntry, 
@@ -142,6 +143,11 @@ function MainApp() {
   const handleAddHouse = useCallback(async (name: string) => {
     await addHouse(name)
   }, [addHouse])
+
+  const handleDeleteHouse = useCallback(async (id: string) => {
+    await deleteHouse(id)
+    if (addingToHouseId === id) setAddingToHouseId('')
+  }, [deleteHouse, addingToHouseId])
 
   const handleAddCounter = useCallback(async (data: { name: string; unit: string; color: string; houseId: string }) => {
     const newCounter = await addCounter(data)
@@ -242,6 +248,8 @@ function MainApp() {
           {view === 'settings' ? (
             <SettingsPage
               counters={counters}
+              houses={houses}
+              onDeleteHouse={handleDeleteHouse}
               onImport={importEntries}
               onDeleteCounter={handleDeleteCounter}
               onBack={() => setView('dashboard')}

@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect, type FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { CounterWithEntries } from '../../hooks/useAppData'
+import type { House } from '../../lib/api'
 import { parseCSV, downloadFile } from '../../utils/helpers'
 import { getCounterIcon } from '../icons/CounterIcons'
 import { LanguageSwitcher } from '../common/LanguageSwitcher'
@@ -13,6 +14,8 @@ const isElectron = !!window.electronAPI
 
 export interface SettingsPageProps {
   counters: CounterWithEntries[]
+  houses: House[]
+  onDeleteHouse: (id: string) => Promise<void>
   onImport: (counterId: string, entries: Array<{ date: string; value: number; note?: string }>) => Promise<{ created: number; skipped: number }>
   onDeleteCounter: (id: string) => void
   onBack: () => void
@@ -24,7 +27,7 @@ export interface SettingsPageProps {
   onToggleStat: (key: StatKey) => void
 }
 
-export const SettingsPage: FC<SettingsPageProps> = ({ counters, onImport, onDeleteCounter, onBack, theme, onToggleTheme, scale, onToggleScale, visibleStats, onToggleStat }) => {
+export const SettingsPage: FC<SettingsPageProps> = ({ counters, houses, onDeleteHouse, onImport, onDeleteCounter, onBack, theme, onToggleTheme, scale, onToggleScale, visibleStats, onToggleStat }) => {
   const { t } = useTranslation()
   const [importFeedback, setImportFeedback] = useState<Record<string, string>>({})
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -39,6 +42,17 @@ export const SettingsPage: FC<SettingsPageProps> = ({ counters, onImport, onDele
   const [keyError, setKeyError] = useState<string | null>(null)
   const [confirmReset, setConfirmReset] = useState(false)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [confirmHouseId, setConfirmHouseId] = useState<string | null>(null)
+  const [houseError, setHouseError] = useState<Record<string, string>>({})
+
+  async function handleDeleteHouse(id: string) {
+    setConfirmHouseId(null)
+    try {
+      await onDeleteHouse(id)
+    } catch (err) {
+      setHouseError(prev => ({ ...prev, [id]: err instanceof Error ? err.message : String(err) }))
+    }
+  }
 
   useEffect(() => {
     if (!isElectron) return
@@ -273,6 +287,55 @@ export const SettingsPage: FC<SettingsPageProps> = ({ counters, onImport, onDele
                 </button>
               )}
             </div>
+          </div>
+        )}
+
+        {houses.length > 0 && (
+          <div style={{ marginBottom: 32, padding: '16px 20px', background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 12 }}>
+            <div style={{ fontFamily: 'Outfit Variable', fontSize: 14, fontWeight: 600, marginBottom: 4 }}>{t('settings.houses')}</div>
+            <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 8 }}>{t('settings.houses_subtitle')}</div>
+            {houses.map(house => {
+              const counterCount = counters.filter(c => c.houseId === house.id).length
+              return (
+                <div key={house.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderTop: '1px solid var(--border)' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500 }}>{house.name}</div>
+                    {houseError[house.id] && <div style={{ fontSize: 12, color: '#ef4444', marginTop: 2 }}>{houseError[house.id]}</div>}
+                  </div>
+                  {confirmHouseId === house.id ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                      {counterCount > 0 ? (
+                        <div style={{ fontSize: 12, color: 'var(--text2)' }}>{t('house.has_counters', { count: counterCount })}</div>
+                      ) : (
+                        <>
+                          <div style={{ fontSize: 12, color: 'var(--text2)' }}>{t('house.delete_confirm', { name: house.name })}</div>
+                          <button
+                            onClick={() => handleDeleteHouse(house.id)}
+                            style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, padding: '6px 12px', color: '#ef4444', cursor: 'pointer', fontFamily: 'Inter Variable', fontSize: 12, fontWeight: 500 }}
+                          >
+                            {t('actions.delete')}
+                          </button>
+                        </>
+                      )}
+                      <button onClick={() => setConfirmHouseId(null)} style={{ background: 'var(--bg4)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px', color: 'var(--text2)', cursor: 'pointer', fontFamily: 'Inter Variable', fontSize: 12, fontWeight: 500 }}>
+                        {t('actions.cancel')}
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => { setConfirmHouseId(house.id); setHouseError(prev => { const next = { ...prev }; delete next[house.id]; return next }) }}
+                      aria-label={t('actions.delete')}
+                      title={t('actions.delete')}
+                      style={{ background: 'transparent', border: 'none', padding: '6px 8px', borderRadius: 8, cursor: 'pointer', color: 'var(--text3)', display: 'flex', alignItems: 'center', transition: 'color 0.15s' }}
+                      onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
+                      onMouseLeave={e => e.currentTarget.style.color = 'var(--text3)'}
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                    </button>
+                  )}
+                </div>
+              )
+            })}
           </div>
         )}
 

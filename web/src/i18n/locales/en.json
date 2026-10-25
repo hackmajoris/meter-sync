@@ -13,6 +13,8 @@
     "add": "Add House",
     "no_houses": "No home yet",
     "no_houses_sub": "Add your first home to start tracking",
+    "delete_confirm": "Delete \"{{name}}\"?",
+    "has_counters": "Delete its {{count}} counter(s) first",
     "no_counters_sub": "Add your first counter to start tracking"
   },
   "entry": {
@@ -96,6 +98,8 @@
     "scale_subtitle": "Adjust the overall interface size",
     "stats": "Dashboard stats",
     "stats_subtitle": "Choose which stat cards appear on the dashboard",
+    "houses": "Houses",
+    "houses_subtitle": "Remove houses you no longer track",
     "scale_sm": "Small",
     "scale_md": "Medium",
     "scale_lg": "Large",
