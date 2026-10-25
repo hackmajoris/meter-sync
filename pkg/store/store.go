@@ -641,7 +641,8 @@ func (s *Store) BulkCreateEntries(ctx context.Context, counterID string, entries
 // Entries are cumulative meter readings. The difference between two readings is spread evenly
 // over each day between them, the last day taking the rounding remainder, and must match
 // toConsumption in web/src/utils/helpers.ts. The date filter applies to those days, so the
-// first day in range still counts against the reading before it.
+// first day in range still counts against the reading before it. Leading zero readings are
+// placeholders before the real meter value, so the first non-zero reading is the baseline.
 func (s *Store) CounterStats(ctx context.Context, counterID string, f StatsFilters) (Stats, error) {
 	rows, err := s.db.QueryContext(ctx, `SELECT date, value FROM entries WHERE counter_id = ? ORDER BY date`, counterID)
 	if err != nil {
@@ -662,6 +663,9 @@ func (s *Store) CounterStats(ctx context.Context, counterID string, f StatsFilte
 		d, err := time.Parse("2006-01-02", date)
 		if err != nil {
 			return Stats{}, fmt.Errorf("parse date %q: %w", date, err)
+		}
+		if first && value == 0 {
+			continue
 		}
 		if !first {
 			days := int(math.Round(d.Sub(prevDate).Hours() / 24))

@@ -10,6 +10,46 @@ import (
 
 // Entries are cumulative meter readings, so stats must describe consumption
 // (differences between readings), never the readings themselves.
+func TestCounterStatsLeadingZeros(t *testing.T) {
+	ctx := context.Background()
+	s, err := store.New(filepath.Join(t.TempDir(), "test.db"), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = s.Close() })
+
+	h, err := s.CreateHouse(ctx, "Home")
+	if err != nil {
+		t.Fatal(err)
+	}
+	c, err := s.CreateCounter(ctx, store.CreateCounterInput{Name: "Energy", Unit: "kWh", Color: "#000", HouseID: h.ID})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, e := range []store.CreateEntryInput{
+		{Date: "2026-09-01", Value: 0},
+		{Date: "2026-09-02", Value: 0},
+		{Date: "2026-09-03", Value: 8000},
+		{Date: "2026-09-04", Value: 8002},
+		{Date: "2026-09-05", Value: 8005},
+	} {
+		if _, err := s.CreateEntry(ctx, c.ID, e); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	// Zero placeholders before the first real reading must not turn the meter's
+	// starting value (8000) into one day of consumption.
+	got, err := s.CounterStats(ctx, c.ID, store.StatsFilters{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := store.Stats{Avg: 2.5, Total: 5, Max: 3, Min: 2, Count: 2}
+	if got != want {
+		t.Errorf("got %+v, want %+v", got, want)
+	}
+}
+
 func TestCounterStats(t *testing.T) {
 	ctx := context.Background()
 	s, err := store.New(filepath.Join(t.TempDir(), "test.db"), "")

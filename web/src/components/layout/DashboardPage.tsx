@@ -119,10 +119,11 @@ export const DashboardPage: FC<DashboardPageProps> = ({
     const all = counter?.entries || []
     if (!all.length) return []
     const byDate = new Map(all.map(e => [e.date, e]))
-    const first = sortedEntries[sortedEntries.length - 1]
-    const rows: (Entry & { estimated?: boolean })[] = [first]
-    let reading = first.value
-    for (const c of toConsumption(all)) {
+    const consumption = toConsumption(all)
+    const rows: (Entry & { estimated?: boolean })[] = [...sortedEntries].reverse()
+      .filter(e => !consumption.length || e.date < consumption[0].date)
+    let reading = rows[rows.length - 1].value
+    for (const c of consumption) {
       const real = byDate.get(c.date)
       reading = real ? real.value : +(reading + c.value).toFixed(2)
       rows.push(real ?? { ...c, value: reading, note: '', estimated: true })

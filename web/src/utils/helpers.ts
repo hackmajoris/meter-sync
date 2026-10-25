@@ -52,14 +52,17 @@ export function localDate(d = new Date()): string {
  * Entries are cumulative meter readings. Returns daily consumption sorted
  * ascending by date. When days are missing between two readings, the
  * difference is spread evenly over each day of the gap, the last day taking
- * the rounding remainder so totals stay exact. The first reading has no
- * predecessor and is dropped.
+ * the rounding remainder so totals stay exact. Leading zero readings are
+ * placeholders before the real meter value, so the first non-zero reading is
+ * the baseline and has no consumption of its own.
  */
 export function toConsumption(entries: Entry[]): Entry[] {
   const DAY = 86400000
   const sorted = [...entries].sort((a, b) => a.date.localeCompare(b.date))
   const out: Entry[] = []
-  for (let i = 1; i < sorted.length; i++) {
+  const base = sorted.findIndex(e => e.value !== 0)
+  if (base < 0) return out
+  for (let i = base + 1; i < sorted.length; i++) {
     const prev = sorted[i - 1], e = sorted[i]
     const start = Date.parse(prev.date + 'T00:00:00Z')
     const days = Math.round((Date.parse(e.date + 'T00:00:00Z') - start) / DAY)
